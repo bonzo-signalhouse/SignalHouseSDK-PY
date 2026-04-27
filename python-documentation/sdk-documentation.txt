@@ -1,0 +1,550 @@
+================================================================================
+                    SIGNALHOUSE PYTHON SDK DOCUMENTATION
+================================================================================
+
+INSTALLATION
+--------------------------------------------------------------------------------
+  pip install signalhouse
+
+
+INITIALIZATION
+--------------------------------------------------------------------------------
+  from signalhouse import SignalHouseSDK
+
+  signal_house = SignalHouseSDK(
+      api_key="your-api-token",
+      base_url="https://v2.signalhouse.io",
+  )
+
+  For staging: use "https://v2staging.signalhouse.io" as the base_url.
+
+  Required options:
+    - api_key   (str)  JWT token or service user token for authentication
+    - base_url  (str)  API base URL
+
+  The SDK raises a ValueError at initialization if api_key or base_url
+  is missing.
+
+
+PER-REQUEST TOKEN OVERRIDE
+--------------------------------------------------------------------------------
+  Every SDK method accepts an optional "token" keyword argument to override
+  the default api_key for that single request.
+
+  Example:
+    response = signal_house.messages.get_messages(
+        page=1,
+        limit=10,
+        token="user-specific-jwt-token",
+    )
+
+  The per-request token takes precedence over the api_key provided at
+  initialization. The original api_key remains unchanged.
+
+
+CUSTOM HEADERS
+--------------------------------------------------------------------------------
+  Pass additional headers via the "headers" keyword argument:
+
+  Example:
+    response = signal_house.numbers.get_phone_numbers(
+        page=1,
+        limit=20,
+        headers={"X-Request-Id": "req_abc123"},
+    )
+
+
+================================================================================
+                          DOMAIN METHOD REFERENCE
+================================================================================
+
+AUTH  (signal_house.auth)
+--------------------------------------------------------------------------------
+  login(email, password, *, token=None, headers=None)
+    Login with email and password.
+
+  reset_password(user_id, new_password, *, token=None, headers=None)
+    Reset a user's password.
+
+  get_auth_history(*, group_id=None, user_id=None, page=None, limit=None,
+      token=None, headers=None)
+    Get token login history.
+
+
+BILLING  (signal_house.billing)
+--------------------------------------------------------------------------------
+  get_transaction_history(*, group_id=None, subgroup_id=None,
+      brand_id=None, campaign_id=None, entry_type=None,
+      transaction_type=None, start_date=None, end_date=None,
+      token=None, headers=None)
+    Get transaction history with filters.
+
+  get_wallet(*, group_id=None, token=None, headers=None)
+    Get wallet balance and settings.
+
+  update_wallet(group_id, *, auto_recharge_enabled=None,
+      auto_recharge_threshold=None, auto_recharge_to_amount=None,
+      primary_payment_method_id=None, secondary_payment_method_id=None,
+      token=None, headers=None)
+    Update wallet auto-recharge settings.
+
+  get_payment_methods(*, group_id=None, token=None, headers=None)
+    List saved payment methods.
+
+  add_funds(group_id, amount, payment_method_id, *, token=None,
+      headers=None)
+    Add funds to wallet. Amount is in microdollars (1,000,000 = $1.00).
+
+  add_payment_method(group_id, payment_method_id, *, token=None,
+      headers=None)
+    Save a new payment method.
+
+  remove_payment_method(group_id, payment_method_id, *, token=None,
+      headers=None)
+    Remove a saved payment method.
+
+  get_invoice_details(*, group_id=None, subgroup_id=None,
+      start_date=None, end_date=None, token=None, headers=None)
+    Get invoice/billing details.
+
+  get_fees(*, group_id=None, token=None, headers=None)
+    Get fee schedule for the group.
+
+
+BRANDS  (signal_house.brands)
+--------------------------------------------------------------------------------
+  get_brands(*, id=None, subgroup_id=None, group_id=None, page=None,
+      limit=None, status=None, token=None, headers=None)
+    List brands with filters.
+
+  create_brand(brand_data, *, token=None, headers=None)
+    Create a new 10DLC brand.
+
+  update_brand(brand_id, brand_data, *, token=None, headers=None)
+    Update brand information.
+
+  delete_brand(brand_id, *, token=None, headers=None)
+    Delete (soft) a brand.
+
+  transfer_brand(subgroup_id, brand_ids, *, token=None, headers=None)
+    Transfer brands to a different subgroup.
+
+  get_external_vetting(brand_id, *, token=None, headers=None)
+    Get external vetting info for a brand.
+
+  create_external_vetting(brand_id, *, token=None, headers=None)
+    Submit brand for external vetting.
+
+  revet_brand(brand_id, *, token=None, headers=None)
+    Resubmit brand for vetting.
+
+  get_appeal_history(brand_id, *, token=None, headers=None)
+    List identity status appeals for a brand.
+
+  submit_appeal(brand_id, appeal_categories, explanation, *, file=None,
+      token=None, headers=None)
+    Submit a brand identity status appeal with supporting documentation.
+    Uses multipart/form-data automatically.
+    appeal_categories: list of strings (VERIFY_TAX_ID, VERIFY_NON_PROFIT, VERIFY_GOVERNMENT)
+    explanation: str (max 1024 chars)
+    file: file-like object (supported: .jpg, .jpeg, .png, .bmp, .raw, .tiff, .pdf, .docx, .htm, .odt, .rtf, .txt, .xml)
+
+
+CAMPAIGNS  (signal_house.campaigns)
+--------------------------------------------------------------------------------
+  get_campaigns(*, id=None, brand_id=None, subgroup_id=None,
+      group_id=None, page=None, limit=None, status=None, token=None,
+      headers=None)
+    List campaigns with filters.
+
+  create_campaign(campaign_data, *, token=None, headers=None)
+    Create a new 10DLC campaign.
+
+  update_campaign(campaign_id, campaign_data, *, token=None, headers=None)
+    Update campaign details.
+
+  delete_campaign(campaign_id, *, token=None, headers=None)
+    Delete (soft) a campaign.
+
+  appeal_dca_rejection(campaign_id, *, reason, token=None, headers=None)
+    Appeal a DCA-rejected campaign. The campaign must be in DCA_REJECTED status.
+    Sends a POST to /campaign/appealDcaRejection/:campaignId.
+    Required body: reason (str, max 2048 chars)
+    Returns 202: {"Message": "Campaign DCA appeal has been queued for processing"}
+
+  nudge_dca_for_campaign(campaign_id, *, token=None, headers=None)
+    Nudge a connectivity partner to prioritize review of a campaign in PENDING_DCA_APPROVAL status.
+    Sends a POST to /campaign/nudge/:campaignId.
+    No request body required.
+    Returns 200: {"message": "Nudge successful"}
+
+
+GROUPS  (signal_house.groups)
+--------------------------------------------------------------------------------
+  get_group(*, id=None, token=None, headers=None)
+    Get group details by ID.
+
+  update_group(id, group_data, *, token=None, headers=None)
+    Update group information.
+
+
+LANDINGS  (signal_house.landings)
+--------------------------------------------------------------------------------
+  get_landings(*, landing_id=None, token=None, headers=None)
+    Get a landing page by ID.
+
+  get_landing_by_brand_id(brand_id, *, token=None, headers=None)
+    Get landing page associated with a brand.
+
+  create_landing(landing_data, *, file=None, token=None, headers=None)
+    Create a landing page with optional image upload.
+    Uses multipart/form-data automatically.
+
+  update_landing(landing_id, landing_data, *, file=None, token=None,
+      headers=None)
+    Update a landing page with optional image upload.
+    Uses multipart/form-data automatically.
+
+  delete_landing(landing_id, *, token=None, headers=None)
+    Delete a landing page.
+
+
+MESSAGES  (signal_house.messages)
+--------------------------------------------------------------------------------
+  get_messages(*, id=None, campaign_id=None, brand_id=None,
+      subgroup_id=None, group_id=None, status=None, direction=None,
+      message_type=None, carrier=None, start_date=None, end_date=None,
+      sort_field=None, sort_order=None, page=None, limit=None,
+      token=None, headers=None)
+    List messages with extensive filters.
+
+  get_analytics(*, group_id=None, subgroup_id=None, brand_id=None,
+      campaign_id=None, phone_number=None, carrier=None,
+      start_date=None, end_date=None, token=None, headers=None)
+    Get aggregated message analytics.
+
+  send_sms(sender_phone_number, recipient_phone_numbers, message_body,
+      *, status_callback_url=None, enable_shortlink=None, token=None,
+      headers=None)
+    Send an SMS message.
+    Required: sender_phone_number, recipient_phone_numbers, message_body
+
+  send_mms(sender_phone_number, recipient_phone_numbers, message_body,
+      *, media_urls=None, status_callback_url=None, enable_shortlink=None,
+      enable_compression=None, images=None, token=None, headers=None)
+    Send an MMS message with media attachments.
+    Uses multipart/form-data automatically.
+    Required: sender_phone_number, recipient_phone_numbers, message_body
+
+  send_group_message(sender_phone_number, recipient_phone_numbers,
+      message_body, *, media_urls=None, status_callback_url=None,
+      enable_shortlink=None, enable_compression=None, images=None,
+      token=None, headers=None)
+    Send a group MMS message.
+    Uses multipart/form-data automatically.
+    Required: sender_phone_number, recipient_phone_numbers, message_body
+
+
+NOTIFICATIONS  (signal_house.notifications)
+--------------------------------------------------------------------------------
+  get_notifications(*, id=None, group_id=None, page=None, limit=None,
+      status=None, event_types=None, token=None, headers=None)
+    Get notifications with filters.
+
+  update_notification_status(ids, status, *, token=None, headers=None)
+    Mark notifications as READ or UNREAD.
+
+  delete_notification(id, *, token=None, headers=None)
+    Delete a notification.
+
+
+NUMBERS  (signal_house.numbers)
+--------------------------------------------------------------------------------
+  get_phone_numbers(*, phone_number=None, campaign_id=None,
+      brand_id=None, subgroup_id=None, group_id=None, page=None,
+      limit=None, token=None, headers=None)
+    List your phone numbers with filters.
+
+  get_available_phone_numbers(*, sms_enabled=None, mms_enabled=None,
+      voice_enabled=None, country=None, state=None, npa=None, nxx=None,
+      phone_number=None, limit=None, page=None, token=None, headers=None)
+    Search available numbers for purchase.
+
+  purchase_phone_number(phone_numbers, subgroup_id, *, token=None,
+      headers=None)
+    Purchase one or more phone numbers.
+
+  update_phone_number(phone_number, update_data, *, token=None,
+      headers=None)
+    Update phone number details (e.g., friendly name).
+
+  assign_phone_number_to_campaign(campaign_id, phone_numbers, *,
+      token=None, headers=None)
+    Assign numbers to a campaign.
+
+  unassign_phone_numbers_from_campaigns(phone_numbers, *, token=None,
+      headers=None)
+    Unassign numbers from their campaigns.
+
+  delete_phone_numbers(phone_numbers, *, token=None, headers=None)
+    Release phone numbers.
+
+  transfer_phone_numbers(phone_numbers, new_subgroup_id, *, token=None,
+      headers=None)
+    Transfer unassigned numbers between subgroups.
+
+  search_npa_nxx(*, country=None, state=None, city=None, npa=None,
+      nxx=None, token=None, headers=None)
+    Search NPA/NXX area code lookup data.
+
+  lookup_locations(entries, *, token=None, headers=None)
+    Batch lookup city/state for NPA/NXX pairs.
+    entries: [{"npa": "213", "nxx": "555"}, ...]
+
+  port_in_phone_number(number_data, *, token=None, headers=None)
+    Submit a port-in request (POST /number/portin).
+    number_data: dict containing port-in request data (required).
+
+  get_port_requests(*, group_id=None, phone_number=None, status=None,
+      page=None, limit=None, token=None, headers=None)
+    Get port-in requests with optional filters (GET /number/portin).
+    All parameters are optional.
+
+
+SHORTLINKS  (signal_house.shortlinks)
+--------------------------------------------------------------------------------
+  get_shortlink(*, shortlink_id=None, message_id=None,
+      phone_number=None, campaign_id=None, brand_id=None,
+      subgroup_id=None, group_id=None, page=None, limit=None,
+      token=None, headers=None)
+    Get shortlink details and click data.
+
+  get_shortlink_redirect(shortlink_id, *, token=None, headers=None)
+    Get the redirect URL for a shortlink.
+
+
+SUBGROUPS  (signal_house.subgroups)
+--------------------------------------------------------------------------------
+  get_subgroups(*, id=None, group_id=None, page=None, limit=None,
+      token=None, headers=None)
+    List subgroups with filters.
+
+  create_subgroup(subgroup_data, *, token=None, headers=None)
+    Create a new subgroup.
+
+  update_subgroup(id, update_data, *, token=None, headers=None)
+    Update subgroup details.
+
+  delete_subgroup(id, *, token=None, headers=None)
+    Delete (deactivate) a subgroup.
+
+
+SUBSCRIPTIONS  (signal_house.subscriptions)
+--------------------------------------------------------------------------------
+  get_subscriptions(*, group_id=None, only_active=None, token=None,
+      headers=None)
+    Get subscription history for a group.
+
+  subscribe(group_id, template_id, *, token=None, headers=None)
+    Subscribe a group to a plan.
+
+  unsubscribe(group_id, *, token=None, headers=None)
+    Unsubscribe a group from their current plan.
+
+
+USERS  (signal_house.users)
+--------------------------------------------------------------------------------
+  get_users(*, id=None, group_id=None, user_type=None, token=None,
+      headers=None)
+    List users with filters.
+
+  create_user(data, *, token=None, headers=None)
+    Create a new user.
+
+  create_service_user(data, *, token=None, headers=None)
+    Create a service user (API key).
+
+  update_user(id, data, *, token=None, headers=None)
+    Update user information.
+
+  delete_user(id, *, token=None, headers=None)
+    Delete (deactivate) a user.
+
+  get_notification_preferences(id, *, token=None, headers=None)
+    Get user notification preferences.
+
+  update_notification_preferences(id, notification_preferences, *,
+      token=None, headers=None)
+    Update notification preferences.
+
+
+WEBHOOKS  (signal_house.webhooks)
+--------------------------------------------------------------------------------
+  get_webhooks(*, id=None, group_id=None, endpoint_type=None,
+      phone_number=None, page=None, limit=None, token=None, headers=None)
+    List webhooks with filters.
+
+  create_webhook(webhook_data, *, token=None, headers=None)
+    Create a new webhook.
+
+  update_webhook(id, update_data, *, token=None, headers=None)
+    Update webhook configuration.
+
+  delete_webhook(id, *, token=None, headers=None)
+    Delete a webhook.
+
+
+================================================================================
+                          MULTIPART REQUESTS
+================================================================================
+
+  The following methods use multipart/form-data automatically:
+
+    - signal_house.messages.send_mms(...)
+    - signal_house.messages.send_group_message(...)
+    - signal_house.landings.create_landing(...)
+    - signal_house.landings.update_landing(...)
+    - signal_house.brands.submit_appeal(...)
+
+  You do not need to construct multipart form data manually. Pass parameters
+  as normal keyword arguments and the SDK builds the form data internally
+  using the requests library.
+
+
+================================================================================
+                          QUERY STRING HELPERS
+================================================================================
+
+  The SDK automatically constructs query strings from method parameters.
+  Any parameter with a None value is excluded, so you only need to pass
+  the filters you care about.
+
+  Example:
+    # Only sends ?status=FAILED&page=1&limit=50
+    messages = signal_house.messages.get_messages(
+        status="FAILED",
+        group_id=None,     # excluded
+        direction=None,    # excluded
+        page=1,
+        limit=50,
+    )
+
+
+================================================================================
+                             VALIDATION
+================================================================================
+
+  The SDK validates required parameters client-side before making any HTTP
+  request. If a required parameter is missing, None, or an empty string,
+  the SDK raises a SignalHouseValidationError immediately -- no network
+  request is made.
+
+  Validation errors have:
+    - Type:    signalhouse.exceptions.SignalHouseValidationError
+    - Message: "Missing required parameter: <field_name>"
+    - status:  400
+
+
+================================================================================
+                           ERROR HANDLING
+================================================================================
+
+  The SDK uses a standardized response format. Errors are NOT raised --
+  they are returned as dictionaries with "success": False.
+
+  Success response:
+    {"success": True, "data": {...}, "status": 200}
+
+  Error response:
+    {"success": False, "error": "Error message", "status": 400}
+
+  Error types summary:
+
+    Source                    Behavior                              How to Handle
+    ---------------------------------------------------------------------------
+    Missing required param    Raises SignalHouseValidationError     try/except
+    HTTP 4xx/5xx from API     Returns {"success": False, ...}      Check response["success"]
+    Network failure           Returns {"success": False, ...}      Check response["success"]
+
+
+================================================================================
+                       COMPLETE INTEGRATION EXAMPLE
+================================================================================
+
+  import os
+  from flask import Flask, request, jsonify
+  from signalhouse import SignalHouseSDK
+  from signalhouse.exceptions import SignalHouseValidationError
+
+  app = Flask(__name__)
+
+  signal_house = SignalHouseSDK(
+      api_key=os.environ["SIGNALHOUSE_API_KEY"],
+      base_url="https://v2.signalhouse.io",
+  )
+
+  # Send an SMS notification
+  @app.post("/api/notify")
+  def notify():
+      data = request.get_json()
+
+      try:
+          response = signal_house.messages.send_sms(
+              sender_phone_number=data["senderNumber"],
+              recipient_phone_numbers=[data["recipientNumber"]],
+              message_body=data["message"],
+              status_callback_url=f"{os.environ['BASE_URL']}/api/delivery-status",
+          )
+
+          if not response["success"]:
+              return jsonify({"error": response["error"]}), response.get("status", 500)
+
+          return jsonify({
+              "messageId": response["data"]["messageId"],
+              "status": response["data"]["status"],
+          })
+      except SignalHouseValidationError as e:
+          return jsonify({"error": str(e)}), 400
+      except Exception:
+          return jsonify({"error": "Internal server error"}), 500
+
+  # Receive delivery status callbacks
+  @app.post("/api/delivery-status")
+  def delivery_status():
+      data = request.get_json()
+      print(f"Message {data['messageId']} status: {data['status']}")
+      return jsonify({"received": True})
+
+  # List phone numbers with per-request token override
+  @app.get("/api/numbers")
+  def list_numbers():
+      auth_header = request.headers.get("Authorization", "")
+      user_token = auth_header.replace("Bearer ", "")
+
+      response = signal_house.numbers.get_phone_numbers(
+          page=int(request.args.get("page", 1)),
+          limit=int(request.args.get("limit", 20)),
+          token=user_token,
+      )
+
+      if not response["success"]:
+          return jsonify({"error": response["error"]}), response.get("status", 500)
+
+      return jsonify(response["data"])
+
+  # Get message analytics
+  @app.get("/api/analytics")
+  def analytics():
+      response = signal_house.messages.get_analytics(
+          start_date=request.args.get("startDate"),
+          end_date=request.args.get("endDate"),
+          campaign_id=request.args.get("campaignId"),
+      )
+
+      if not response["success"]:
+          return jsonify({"error": response["error"]}), response.get("status", 500)
+
+      return jsonify(response["data"])
+
+  if __name__ == "__main__":
+      app.run(port=3000)
