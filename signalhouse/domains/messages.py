@@ -305,6 +305,7 @@ class Messages:
         *,
         status_callback_url: str | None = None,
         enable_shortlink: bool = False,
+        filter_landlines_and_inactive_numbers: bool = False,
         token: str | None = None,
         headers: dict[str, str] | None = None,
     ) -> dict[str, Any]:
@@ -316,6 +317,7 @@ class Messages:
             message_body: The body of the SMS message.
             status_callback_url: The URL to receive status callbacks.
             enable_shortlink: Whether to enable shortlink in the message.
+            filter_landlines_and_inactive_numbers: Whether to filter out landline and inactive numbers before sending.
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
 
@@ -336,6 +338,8 @@ class Messages:
             "messageBody": message_body,
             "enableShortlink": enable_shortlink,
         }
+        if filter_landlines_and_inactive_numbers:
+            body["filterLandlinesAndInactiveNumbers"] = True
         if status_callback_url is not None:
             body["statusCallbackUrl"] = status_callback_url
         return self._sdk._request(
@@ -356,6 +360,7 @@ class Messages:
         status_callback_url: str | None = None,
         enable_shortlink: bool = False,
         enable_compression: bool = True,
+        filter_landlines_and_inactive_numbers: bool = False,
         images: list[BinaryIO | tuple] | None = None,
         token: str | None = None,
         headers: dict[str, str] | None = None,
@@ -370,6 +375,7 @@ class Messages:
             status_callback_url: The URL to receive status callbacks.
             enable_shortlink: Whether to enable shortlink in the message.
             enable_compression: Whether to enable image compression for attachments.
+            filter_landlines_and_inactive_numbers: Whether to filter out landline and inactive numbers before sending.
             images: Image files to attach to the MMS message. Each can be a file-like object
                     or a tuple of (filename, file_object, content_type).
             token: Optional bearer token for authentication.
@@ -392,6 +398,9 @@ class Messages:
             "enableShortlink": str(enable_shortlink).lower(),
             "enableCompression": str(enable_compression).lower(),
         }
+
+        if filter_landlines_and_inactive_numbers:
+            form_data["filterLandlinesAndInactiveNumbers"] = "true"
 
         if isinstance(recipient_phone_numbers, list):
             form_data["recipientPhoneNumber"] = json.dumps(recipient_phone_numbers)
@@ -431,6 +440,7 @@ class Messages:
         status_callback_url: str | None = None,
         enable_shortlink: bool = False,
         enable_compression: bool = True,
+        filter_landlines_and_inactive_numbers: bool = False,
         images: list[BinaryIO | tuple] | None = None,
         token: str | None = None,
         headers: dict[str, str] | None = None,
@@ -445,6 +455,7 @@ class Messages:
             status_callback_url: The URL to receive status callbacks.
             enable_shortlink: Whether to enable shortlink in the message.
             enable_compression: Whether to enable image compression for attachments.
+            filter_landlines_and_inactive_numbers: Whether to filter out landline and inactive numbers before sending.
             images: Image files to attach to the MMS message. Each can be a file-like object
                     or a tuple of (filename, file_object, content_type).
             token: Optional bearer token for authentication.
@@ -467,6 +478,9 @@ class Messages:
             "enableShortlink": str(enable_shortlink).lower(),
             "enableCompression": str(enable_compression).lower(),
         }
+
+        if filter_landlines_and_inactive_numbers:
+            form_data["filterLandlinesAndInactiveNumbers"] = "true"
 
         if isinstance(recipient_phone_numbers, list):
             form_data["recipientPhoneNumber"] = json.dumps(recipient_phone_numbers)
@@ -492,6 +506,35 @@ class Messages:
             method="POST",
             form_data=form_data,
             files=files_list if files_list else None,
+            token=token,
+            headers=headers,
+        )
+
+    def carrier_id_lookup(
+        self,
+        phone_number: str,
+        *,
+        token: str | None = None,
+        headers: dict[str, str] | None = None,
+    ) -> dict[str, Any]:
+        """Look up the carrier for a phone number. Always fresh (not cached). Billed per request.
+
+        Args:
+            phone_number: The phone number to look up (10+ digits, no + prefix).
+            token: Optional bearer token for authentication.
+            headers: Additional headers to include in the request.
+
+        Returns:
+            Standardized response dict with carrier information.
+
+        Raises:
+            SignalHouseValidationError: If required parameters are missing.
+        """
+        self._sdk._require({"phoneNumber": phone_number})
+        return self._sdk._request(
+            "/message/carrier-id",
+            method="POST",
+            body={"phoneNumber": phone_number},
             token=token,
             headers=headers,
         )

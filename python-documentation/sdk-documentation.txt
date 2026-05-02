@@ -244,6 +244,12 @@ MESSAGES  (signal_house.messages)
     Uses multipart/form-data automatically.
     Required: sender_phone_number, recipient_phone_numbers, message_body
 
+  carrier_id_lookup(phone_number)
+    Look up the carrier for a phone number.
+    Always performs a fresh lookup (not cached). Billed per request.
+    Required: phone_number (10+ digits, no + prefix)
+    Returns: { phoneNumber, carrier, carrierFamily, carrierRegion, ported, type, degradedConfidence, cost }
+
 
 NOTIFICATIONS  (signal_house.notifications)
 --------------------------------------------------------------------------------
