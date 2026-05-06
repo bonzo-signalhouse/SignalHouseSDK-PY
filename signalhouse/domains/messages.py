@@ -189,6 +189,35 @@ class Messages:
             headers=headers,
         )
 
+    def get_analytics_filter_options(
+        self,
+        *,
+        group_id: str,
+        token: str | None = None,
+        headers: dict[str, str] | None = None,
+    ) -> dict[str, Any]:
+        """Get filter dropdown options (subgroups, brands, campaigns, phone numbers) for the
+        Analytics page, scoped to a single group. Sourced from ClickHouse — only items with
+        at least one message are returned.
+
+        Args:
+            group_id: The ID of the group whose filter options to load.
+            token: Optional bearer token for authentication.
+            headers: Additional headers to include in the request.
+
+        Returns:
+            Standardized response dict with subgroups, brands, campaigns, and phoneNumbers arrays.
+        """
+        query_string = self._sdk._get_query_string({
+            "groupId": group_id,
+        })
+        return self._sdk._request(
+            f"/message/analytics/filter-options{query_string}",
+            method="GET",
+            token=token,
+            headers=headers,
+        )
+
     def get_dnc_analytics(
         self,
         *,
@@ -344,6 +373,48 @@ class Messages:
             body["statusCallbackUrl"] = status_callback_url
         return self._sdk._request(
             "/message/sms",
+            method="POST",
+            body=body,
+            token=token,
+            headers=headers,
+        )
+
+    def send_p2p(
+        self,
+        recipient_phone_numbers: str | list[str],
+        message_body: str,
+        *,
+        status_callback_url: str | None = None,
+        token: str | None = None,
+        headers: dict[str, str] | None = None,
+    ) -> dict[str, Any]:
+        """Send a P2P message via Rogue Mobile SMPP.
+
+        Args:
+            recipient_phone_numbers: The phone number(s) to send the message to.
+            message_body: The body of the P2P message.
+            status_callback_url: The URL to receive status callbacks.
+            token: Optional bearer token for authentication.
+            headers: Additional headers to include in the request.
+
+        Returns:
+            Standardized response dict.
+
+        Raises:
+            SignalHouseValidationError: If required parameters are missing.
+        """
+        self._sdk._require({
+            "recipientPhoneNumbers": recipient_phone_numbers,
+            "messageBody": message_body,
+        })
+        body: dict[str, Any] = {
+            "recipientPhoneNumber": recipient_phone_numbers,
+            "messageBody": message_body,
+        }
+        if status_callback_url is not None:
+            body["statusCallbackUrl"] = status_callback_url
+        return self._sdk._request(
+            "/message/p2p",
             method="POST",
             body=body,
             token=token,
