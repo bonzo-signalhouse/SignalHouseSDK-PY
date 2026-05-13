@@ -62,6 +62,9 @@ class Subgroups:
 
         Args:
             subgroup_data: The data for the subgroup. Required fields include groupId and subgroupName.
+                Optional carrier-ID fields include carrierIdFamily and carrierIdRegion. Setting
+                those fields requires signalhouse_api, signalhouse_admin, signalhouse_user, api,
+                admin, developer, or billing role.
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
 
@@ -92,7 +95,9 @@ class Subgroups:
 
         Args:
             id: The ID of the subgroup to update.
-            update_data: The data for the subgroup to be updated.
+            update_data: The data for the subgroup to be updated. Optional carrier-ID fields include
+                carrierIdFamily and carrierIdRegion. Setting those fields requires signalhouse_api,
+                signalhouse_admin, signalhouse_user, api, admin, developer, or billing role.
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
 

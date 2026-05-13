@@ -337,9 +337,15 @@ SUBGROUPS  (signal_house.subgroups)
 
   create_subgroup(subgroup_data, *, token=None, headers=None)
     Create a new subgroup.
+    subgroup_data may include optional carrierIdFamily and carrierIdRegion.
+    Setting carrierIdFamily or carrierIdRegion requires signalhouse_api,
+    signalhouse_admin, signalhouse_user, api, admin, developer, or billing role.
 
   update_subgroup(id, update_data, *, token=None, headers=None)
     Update subgroup details.
+    update_data may include optional carrierIdFamily and carrierIdRegion.
+    Setting carrierIdFamily or carrierIdRegion requires signalhouse_api,
+    signalhouse_admin, signalhouse_user, api, admin, developer, or billing role.
 
   delete_subgroup(id, *, token=None, headers=None)
     Delete (deactivate) a subgroup.

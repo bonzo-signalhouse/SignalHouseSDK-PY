@@ -63,6 +63,52 @@ class Billing:
             headers=headers,
         )
 
+    def get_payment_history(
+        self,
+        *,
+        group_id: str,
+        start_date: str,
+        end_date: str,
+        page: int | None = None,
+        limit: int | None = None,
+        timezone: str | None = None,
+        token: str | None = None,
+        headers: dict[str, str] | None = None,
+    ) -> dict[str, Any]:
+        """Get payment history (wallet recharge transactions) with server-side pagination.
+
+        Args:
+            group_id: The ID of the group to filter by.
+            start_date: Start date in YYYY-MM-DD format (inclusive).
+            end_date: End date in YYYY-MM-DD format (inclusive).
+            page: Page number (positive integer, default 1).
+            limit: Results per page (positive integer, max 10000, default 10).
+            timezone: IANA timezone (default: "UTC").
+            token: Optional bearer token for authentication.
+            headers: Additional headers to include in the request.
+
+        Returns:
+            Standardized response dict with data array and pagination metadata.
+        """
+        params: dict[str, Any] = {
+            "groupId": group_id,
+            "startDate": start_date,
+            "endDate": end_date,
+        }
+        if page is not None:
+            params["page"] = page
+        if limit is not None:
+            params["limit"] = limit
+        if timezone is not None:
+            params["timezone"] = timezone
+        query_string = self._sdk._get_query_string(params)
+        return self._sdk._request(
+            f"/billing/wallet/paymentHistory{query_string}",
+            method="GET",
+            token=token,
+            headers=headers,
+        )
+
     def get_wallet(
         self,
         group_id: str,

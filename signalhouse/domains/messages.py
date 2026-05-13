@@ -29,7 +29,7 @@ class Messages:
         recipient_phone_number: str | None = None,
         status: str | None = None,
         direction: str | None = None,
-        message_type: str | None = None,
+        message_type: str | list[str] | None = None,
         carrier: str | None = None,
         start_date: str | None = None,
         end_date: str | None = None,
@@ -213,6 +213,108 @@ class Messages:
         })
         return self._sdk._request(
             f"/message/analytics/filter-options{query_string}",
+            method="GET",
+            token=token,
+            headers=headers,
+        )
+
+    def get_analytics_by_subgroup(
+        self,
+        *,
+        group_id: str,
+        subgroup_id: str | list[str] | None = None,
+        brand_id: str | list[str] | None = None,
+        campaign_id: str | list[str] | None = None,
+        phone_number: str | list[str] | None = None,
+        carrier: str | list[str] | None = None,
+        start_date: str | None = None,
+        end_date: str | None = None,
+        page: int | None = None,
+        limit: int | None = None,
+        channel: str | None = None,
+        token: str | None = None,
+        headers: dict[str, str] | None = None,
+    ) -> dict[str, Any]:
+        """Get a paginated breakdown of message metrics grouped by subgroup. Each row
+        carries the full set of sms/mms/p2p metric columns plus ``smsOptOuts`` and
+        ``mmsOptOuts`` (sourced from the DNC analytics MV — P2P has no opt-outs) so
+        callers can apply channel toggles client-side.
+
+        Args:
+            page: Page number (default 1).
+            limit: Rows per page, max 50.
+            channel: "tenDLC" | "p2p" | "both" (default "both"). Scopes the ORDER BY +
+                row inclusion so a P2P-only caller doesn't get pages dominated by
+                10DLC-heavy subgroups with no visible activity.
+
+        Returns:
+            Standardized response dict with rows, totalCount, page, and limit.
+        """
+        query_string = self._sdk._get_query_string({
+            "groupId": group_id,
+            "subgroupId": subgroup_id,
+            "brandId": brand_id,
+            "campaignId": campaign_id,
+            "phoneNumber": phone_number,
+            "carrier": carrier,
+            "startDate": start_date,
+            "endDate": end_date,
+            "page": page,
+            "limit": limit,
+            "channel": channel,
+        })
+        return self._sdk._request(
+            f"/message/analytics/by-subgroup{query_string}",
+            method="GET",
+            token=token,
+            headers=headers,
+        )
+
+    def get_analytics_by_error_code(
+        self,
+        *,
+        group_id: str,
+        subgroup_id: str | list[str] | None = None,
+        brand_id: str | list[str] | None = None,
+        campaign_id: str | list[str] | None = None,
+        phone_number: str | list[str] | None = None,
+        carrier: str | list[str] | None = None,
+        start_date: str | None = None,
+        end_date: str | None = None,
+        page: int | None = None,
+        limit: int | None = None,
+        channel: str | None = None,
+        token: str | None = None,
+        headers: dict[str, str] | None = None,
+    ) -> dict[str, Any]:
+        """Get a paginated breakdown of failed messages grouped by error code. Each row
+        contains per-channel (sms/mms/p2p) error counts plus an enriched description.
+
+        Args:
+            page: Page number (default 1).
+            limit: Rows per page, max 50.
+            channel: "tenDLC" | "p2p" | "both" (default "both"). Scopes the ORDER BY +
+                totalCount so a P2P-only caller doesn't get pages dominated by codes
+                with only 10DLC errors.
+
+        Returns:
+            Standardized response dict with rows, totalCount, totalErrors, page, and limit.
+        """
+        query_string = self._sdk._get_query_string({
+            "groupId": group_id,
+            "subgroupId": subgroup_id,
+            "brandId": brand_id,
+            "campaignId": campaign_id,
+            "phoneNumber": phone_number,
+            "carrier": carrier,
+            "startDate": start_date,
+            "endDate": end_date,
+            "page": page,
+            "limit": limit,
+            "channel": channel,
+        })
+        return self._sdk._request(
+            f"/message/analytics/by-error-code{query_string}",
             method="GET",
             token=token,
             headers=headers,
