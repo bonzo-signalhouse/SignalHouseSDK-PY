@@ -148,6 +148,7 @@ class Groups:
         Args:
             id: The ID of the group to update.
             group_data: The data for the group, including required fields such as groupName.
+                Optional CNP fields: cspId (str | None), defaultCnpSubgroupId (str | None).
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
 

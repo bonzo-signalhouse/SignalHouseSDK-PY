@@ -45,6 +45,37 @@ class Landings:
             headers=headers,
         )
 
+    def get_public_landing(
+        self,
+        landing_id: str,
+        *,
+        token: str | None = None,
+        headers: dict[str, str] | None = None,
+    ) -> dict[str, Any]:
+        """Get a public (published) landing page by its ID.
+
+        This endpoint is public and does not require authentication.
+
+        Args:
+            landing_id: The ID of the public landing page to retrieve.
+            token: Optional bearer token for authentication.
+            headers: Additional headers to include in the request.
+
+        Returns:
+            Standardized response dict.
+
+        Raises:
+            SignalHouseValidationError: If landing_id is missing.
+        """
+        self._sdk._require({"landingId": landing_id})
+        safe_landing_id = quote(str(landing_id), safe="")
+        return self._sdk._request(
+            f"/landing/public/{safe_landing_id}",
+            method="GET",
+            token=token,
+            headers=headers,
+        )
+
     def create_landing(
         self,
         landing_data: dict[str, Any],

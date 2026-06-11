@@ -113,3 +113,25 @@ class Auth:
             token=token,
             headers=headers,
         )
+
+    def logout_all(
+        self,
+        *,
+        token: str | None = None,
+        headers: dict[str, str] | None = None,
+    ) -> dict[str, Any]:
+        """Log out all other users in the caller's active group.
+
+        Args:
+            token: Optional bearer token for authentication.
+            headers: Additional headers to include in the request.
+
+        Returns:
+            Standardized response dict containing loggedOutCount.
+        """
+        return self._sdk._request(
+            "/auth/logout-all",
+            method="POST",
+            token=token,
+            headers=headers,
+        )

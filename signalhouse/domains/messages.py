@@ -523,6 +523,67 @@ class Messages:
             headers=headers,
         )
 
+    def get_p2p_batch(
+        self,
+        batch_id: str,
+        *,
+        token: str | None = None,
+        headers: dict[str, str] | None = None,
+    ) -> dict[str, Any]:
+        """Get the details of a P2P batch by its ID.
+
+        Args:
+            batch_id: The ID of the P2P batch to retrieve.
+            token: Optional bearer token for authentication.
+            headers: Additional headers to include in the request.
+
+        Returns:
+            Standardized response dict.
+
+        Raises:
+            SignalHouseValidationError: If batch_id is missing.
+        """
+        self._sdk._require({"batchId": batch_id})
+        safe_batch_id = quote(str(batch_id), safe="")
+        return self._sdk._request(
+            f"/message/p2p/batches/{safe_batch_id}",
+            method="GET",
+            token=token,
+            headers=headers,
+        )
+
+    def get_delivery_reports(
+        self,
+        message_ids: list[str],
+        *,
+        token: str | None = None,
+        headers: dict[str, str] | None = None,
+    ) -> dict[str, Any]:
+        """Fetch the latest upstream carrier delivery report for a set of messages by ID.
+
+        Useful for reconciling messages stuck in a non-terminal state. SMS and MMS messages are
+        looked up against the carrier; other message types are returned with their stored status.
+
+        Args:
+            message_ids: The message IDs to fetch carrier delivery reports for (1-100).
+            token: Optional bearer token for authentication.
+            headers: Additional headers to include in the request.
+
+        Returns:
+            Standardized response dict containing an array of carrier delivery reports.
+
+        Raises:
+            SignalHouseValidationError: If required parameters are missing.
+        """
+        self._sdk._require({"messageIds": message_ids})
+        return self._sdk._request(
+            "/message/delivery-report",
+            method="POST",
+            body={"messageIds": message_ids},
+            token=token,
+            headers=headers,
+        )
+
     def send_mms(
         self,
         sender_phone_number: str,
