@@ -100,6 +100,55 @@ class GroupsAdmin:
             headers=headers,
         )
 
+    def link_external(
+        self,
+        link_token: str,
+        external_system: str,
+        external_id: str,
+        *,
+        existing_group_id: str | None = None,
+        token: str | None = None,
+        headers: dict[str, str] | None = None,
+    ) -> dict[str, Any]:
+        """Link an external tenant (GHL/Shopify) to a V2 group (server-to-server).
+
+        Exchanges a single-use link token for a canonical group, adopting an empty portal
+        group, repointing to an existing group, or flagging for manual review.
+
+        Args:
+            link_token: The single-use external-link token minted by the portal user.
+            external_system: The external system ("ghl" or "shopify").
+            external_id: The external tenant identifier.
+            existing_group_id: An existing V2 group ID to repoint to, if any.
+            token: Optional bearer token for authentication.
+            headers: Additional headers to include in the request.
+
+        Returns:
+            Standardized response dict ({"status": ..., "canonicalGroupId": ..., ...}).
+
+        Raises:
+            SignalHouseValidationError: If link_token, external_system, or external_id is missing.
+        """
+        self._sdk._require({
+            "linkToken": link_token,
+            "externalSystem": external_system,
+            "externalId": external_id,
+        })
+        body: dict[str, Any] = {
+            "linkToken": link_token,
+            "externalSystem": external_system,
+            "externalId": external_id,
+        }
+        if existing_group_id is not None:
+            body["existingGroupId"] = existing_group_id
+        return self._sdk._request(
+            "/group/link-external",
+            method="POST",
+            body=body,
+            token=token,
+            headers=headers,
+        )
+
 
 class Groups:
     """Group management operations."""

@@ -23,6 +23,7 @@ from .domains.shortlinks import Shortlinks
 from .domains.subgroups import Subgroups
 from .domains.subscriptions import Subscriptions
 from .domains.users import Users
+from .domains.voice import Voice
 from .domains.webhooks import Webhooks
 
 
@@ -74,6 +75,7 @@ class SignalHouseSDK:
         self.subgroups = Subgroups(self)
         self.subscriptions = Subscriptions(self)
         self.users = Users(self)
+        self.voice = Voice(self)
         self.webhooks = Webhooks(self)
 
     def _request(

@@ -74,6 +74,69 @@ class Auth:
             headers=headers,
         )
 
+    def forgot_password(
+        self,
+        email: str,
+        *,
+        token: str | None = None,
+        headers: dict[str, str] | None = None,
+    ) -> dict[str, Any]:
+        """Request a password-reset link be emailed to the given address (public).
+
+        Always resolves successfully regardless of whether an account exists for the
+        email, so it cannot be used to enumerate registered emails.
+
+        Args:
+            email: The email address to send a reset link to.
+            token: Optional bearer token for authentication.
+            headers: Additional headers to include in the request.
+
+        Returns:
+            Standardized response dict ({"success": True}).
+
+        Raises:
+            SignalHouseValidationError: If email is missing.
+        """
+        self._sdk._require({"email": email})
+        return self._sdk._request(
+            "/auth/forgot-password",
+            method="POST",
+            body={"email": email},
+            token=token,
+            headers=headers,
+        )
+
+    def reset_password_with_token(
+        self,
+        token_value: str,
+        password: str,
+        *,
+        token: str | None = None,
+        headers: dict[str, str] | None = None,
+    ) -> dict[str, Any]:
+        """Reset a password using the single-use token from a reset email (public).
+
+        Args:
+            token_value: The single-use reset token from the email link.
+            password: The new password to set (min 8 characters).
+            token: Optional bearer token for authentication.
+            headers: Additional headers to include in the request.
+
+        Returns:
+            Standardized response dict ({"success": True}).
+
+        Raises:
+            SignalHouseValidationError: If token_value or password is missing.
+        """
+        self._sdk._require({"token": token_value, "password": password})
+        return self._sdk._request(
+            "/auth/reset-password",
+            method="POST",
+            body={"token": token_value, "password": password},
+            token=token,
+            headers=headers,
+        )
+
     def get_auth_history(
         self,
         *,
@@ -132,6 +195,38 @@ class Auth:
         return self._sdk._request(
             "/auth/logout-all",
             method="POST",
+            token=token,
+            headers=headers,
+        )
+
+    def request_external_link_token(
+        self,
+        product: str,
+        *,
+        token: str | None = None,
+        headers: dict[str, str] | None = None,
+    ) -> dict[str, Any]:
+        """Mint a single-use, short-lived external-link token for the authenticated caller.
+
+        The token is handed to the GHL/Shopify backend so it can link the caller's existing
+        V2 group to its tenant.
+
+        Args:
+            product: The external system to link to ("ghl" or "shopify").
+            token: Optional bearer token for authentication.
+            headers: Additional headers to include in the request.
+
+        Returns:
+            Standardized response dict ({"token": ...}).
+
+        Raises:
+            SignalHouseValidationError: If product is missing.
+        """
+        self._sdk._require({"product": product})
+        return self._sdk._request(
+            "/auth/external-link-token",
+            method="POST",
+            body={"product": product},
             token=token,
             headers=headers,
         )

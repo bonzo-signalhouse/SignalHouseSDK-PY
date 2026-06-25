@@ -135,6 +135,9 @@ BRANDS  (signal_house.brands)
   create_external_vetting(brand_id, *, token=None, headers=None)
     Submit brand for external vetting.
 
+  import_external_vetting(brand_id, vetting_provider_id, vetting_id, vetting_token=None, *, token=None, headers=None)
+    Import an existing external vetting record (not billable).
+
   revet_brand(brand_id, *, token=None, headers=None)
     Resubmit brand for vetting.
 

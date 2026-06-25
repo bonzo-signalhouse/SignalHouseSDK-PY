@@ -180,6 +180,51 @@ class Brands:
             headers=headers,
         )
 
+    def import_external_vetting(
+        self,
+        brand_id: str,
+        vetting_provider_id: str,
+        vetting_id: str,
+        vetting_token: str | None = None,
+        *,
+        token: str | None = None,
+        headers: dict[str, str] | None = None,
+    ) -> dict[str, Any]:
+        """Import an existing external vetting record for a brand.
+
+        Unlike create_external_vetting (which orders a new, billable vetting), this attaches a
+        vetting the brand already completed directly with the provider, using the provider-issued
+        vettingId and vettingToken. It is synchronous and not billable.
+
+        Args:
+            brand_id: The ID of the brand to import external vetting for.
+            vetting_provider_id: The external vetting provider (AEGIS, WMC, CV).
+            vetting_id: The provider-issued vetting / transaction ID to import.
+            vetting_token: The provider-issued vetting token (required by some providers, e.g. AEGIS).
+            token: Optional bearer token for authentication.
+            headers: Additional headers to include in the request.
+
+        Returns:
+            Standardized response dict.
+
+        Raises:
+            SignalHouseValidationError: If brand_id, vetting_provider_id, or vetting_id is missing.
+        """
+        self._sdk._require(
+            {"brandId": brand_id, "vettingProviderId": vetting_provider_id, "vettingId": vetting_id}
+        )
+        safe_brand_id = quote(str(brand_id), safe="")
+        body: dict[str, Any] = {"vettingProviderId": vetting_provider_id, "vettingId": vetting_id}
+        if vetting_token is not None:
+            body["vettingToken"] = vetting_token
+        return self._sdk._request(
+            f"/brand/externalvetting/import/{safe_brand_id}",
+            method="POST",
+            body=body,
+            token=token,
+            headers=headers,
+        )
+
     def update_brand(
         self,
         brand_id: str,
