@@ -487,6 +487,7 @@ class Messages:
         message_body: str,
         *,
         status_callback_url: str | None = None,
+        use_signal_house_shortlinks: bool | None = None,
         token: str | None = None,
         headers: dict[str, str] | None = None,
     ) -> dict[str, Any]:
@@ -496,6 +497,9 @@ class Messages:
             recipient_phone_numbers: The phone number(s) to send the message to.
             message_body: The body of the P2P message.
             status_callback_url: The URL to receive status callbacks.
+            use_signal_house_shortlinks: When false, SignalHouse applies no
+                link-shortening or text-spin and your pre-spun links/content are
+                sent verbatim (bring-your-own spinner). Defaults to true.
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
 
@@ -515,6 +519,8 @@ class Messages:
         }
         if status_callback_url is not None:
             body["statusCallbackUrl"] = status_callback_url
+        if use_signal_house_shortlinks is not None:
+            body["useSignalHouseShortlinks"] = use_signal_house_shortlinks
         return self._sdk._request(
             "/message/p2p",
             method="POST",
