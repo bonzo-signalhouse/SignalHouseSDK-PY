@@ -199,6 +199,30 @@ class Auth:
             headers=headers,
         )
 
+    def get_group_id(
+        self,
+        *,
+        token: str | None = None,
+        headers: dict[str, str] | None = None,
+    ) -> dict[str, Any]:
+        """Get the Group ID associated with the caller's JWT (their active group).
+
+        Useful for discovering your own group_id, which is required on most other requests.
+
+        Args:
+            token: Optional bearer token for authentication.
+            headers: Additional headers to include in the request.
+
+        Returns:
+            Standardized response dict containing {"groupId": ...}.
+        """
+        return self._sdk._request(
+            "/auth/group-id",
+            method="GET",
+            token=token,
+            headers=headers,
+        )
+
     def request_external_link_token(
         self,
         product: str,

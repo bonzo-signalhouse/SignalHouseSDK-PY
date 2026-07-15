@@ -274,6 +274,10 @@ NUMBERS  (signal_house.numbers)
       limit=None, token=None, headers=None)
     List your phone numbers with filters.
 
+  get_number_health(*, phone_number, token=None, headers=None)
+    Get the portal-parity health score (1–10) for an owned phone number.
+    Returns sevenDay and thirtyDay breakdowns matching the portal.
+
   get_available_phone_numbers(*, sms_enabled=None, mms_enabled=None,
       voice_enabled=None, country=None, state=None, npa=None, nxx=None,
       phone_number=None, limit=None, page=None, token=None, headers=None)

@@ -37,6 +37,7 @@ class Messages:
         sort_order: str | None = None,
         page: int | None = None,
         limit: int | None = None,
+        channel: str | list[str] | None = None,
         token: str | None = None,
         headers: dict[str, str] | None = None,
     ) -> dict[str, Any]:
@@ -51,6 +52,8 @@ class Messages:
             status: Filter by status (ENQUEUED, DEQUEUED, SENT, FAILED, DELIVERED).
             direction: Filter by direction (INBOUND, OUTBOUND).
             message_type: Filter by type (SMS, MMS).
+            channel: Filter by channel — "tenDLC", "tollFree", or "p2p" (single value or list).
+                Filters on each message's stored channel; older messages without one count as tenDLC.
             carrier: Filter by carrier used for sending.
             sender_phone_number: Filter by sender phone number.
             recipient_phone_number: Filter by recipient phone number.
@@ -78,6 +81,7 @@ class Messages:
             "status": status,
             "direction": direction,
             "messageType": message_type,
+            "channel": channel,
             "carrier": carrier,
             "startDate": start_date,
             "endDate": end_date,
@@ -104,6 +108,7 @@ class Messages:
         carrier: str | None = None,
         start_date: str | None = None,
         end_date: str | None = None,
+        channel: str | list[str] | None = None,
         token: str | None = None,
         headers: dict[str, str] | None = None,
     ) -> dict[str, Any]:
@@ -118,6 +123,9 @@ class Messages:
             carrier: Filter analytics by carrier.
             start_date: ISO-8601 date or timestamp; normalized to start-of-UTC-day (inclusive).
             end_date: ISO-8601 date or timestamp; normalized to end-of-UTC-day (inclusive). Hourly resolution is not supported.
+            channel: Filter by channel — "tenDLC", "tollFree", or "p2p" (single value or list).
+                Filters on the stored channel; a tenDLC selection also includes older messages with
+                no channel, and p2p is matched by carrier.
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
 
@@ -133,6 +141,7 @@ class Messages:
             "carrier": carrier,
             "startDate": start_date,
             "endDate": end_date,
+            "channel": channel,
         })
         return self._sdk._request(
             f"/message/analytics{query_string}",
@@ -152,6 +161,7 @@ class Messages:
         carrier: str | None = None,
         start_date: str | None = None,
         end_date: str | None = None,
+        channel: str | list[str] | None = None,
         token: str | None = None,
         headers: dict[str, str] | None = None,
     ) -> dict[str, Any]:
@@ -166,6 +176,9 @@ class Messages:
             carrier: Filter analytics by carrier.
             start_date: ISO-8601 date or timestamp; normalized to start-of-UTC-day (inclusive).
             end_date: ISO-8601 date or timestamp; normalized to end-of-UTC-day (inclusive). Hourly resolution is not supported.
+            channel: Filter by channel — "tenDLC", "tollFree", or "p2p" (single value or list).
+                Filters on the stored channel; a tenDLC selection also includes older messages with
+                no channel, and p2p is a real channel here.
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
 
@@ -181,6 +194,7 @@ class Messages:
             "carrier": carrier,
             "startDate": start_date,
             "endDate": end_date,
+            "channel": channel,
         })
         return self._sdk._request(
             f"/message/analytics/detail{query_string}",
@@ -231,7 +245,7 @@ class Messages:
         end_date: str | None = None,
         page: int | None = None,
         limit: int | None = None,
-        channel: str | None = None,
+        channel: str | list[str] | None = None,
         token: str | None = None,
         headers: dict[str, str] | None = None,
     ) -> dict[str, Any]:
@@ -243,9 +257,10 @@ class Messages:
         Args:
             page: Page number (default 1).
             limit: Rows per page, max 50.
-            channel: "tenDLC" | "p2p" | "both" (default "both"). Scopes the ORDER BY +
-                row inclusion so a P2P-only caller doesn't get pages dominated by
-                10DLC-heavy subgroups with no visible activity.
+            channel: "both" (default, all activity) or "tenDLC" / "tollFree" / "p2p" (single value
+                or list). Scopes the ORDER BY + row inclusion by the stored channel column so a
+                single-channel caller doesn't get pages dominated by other channels; toll-free is
+                kept separate from 10DLC.
 
         Returns:
             Standardized response dict with rows, totalCount, page, and limit.
@@ -283,7 +298,7 @@ class Messages:
         end_date: str | None = None,
         page: int | None = None,
         limit: int | None = None,
-        channel: str | None = None,
+        channel: str | list[str] | None = None,
         token: str | None = None,
         headers: dict[str, str] | None = None,
     ) -> dict[str, Any]:
@@ -293,9 +308,9 @@ class Messages:
         Args:
             page: Page number (default 1).
             limit: Rows per page, max 50.
-            channel: "tenDLC" | "p2p" | "both" (default "both"). Scopes the ORDER BY +
-                totalCount so a P2P-only caller doesn't get pages dominated by codes
-                with only 10DLC errors.
+            channel: "both" (default, every code) or "tenDLC" / "tollFree" / "p2p" (single value
+                or list). Scopes the ORDER BY + totalCount by the stored channel column; when one
+                channel is selected, totalErrors reflects only that channel.
 
         Returns:
             Standardized response dict with rows, totalCount, totalErrors, page, and limit.
@@ -331,6 +346,7 @@ class Messages:
         carrier: str | None = None,
         start_date: str | None = None,
         end_date: str | None = None,
+        channel: str | list[str] | None = None,
         token: str | None = None,
         headers: dict[str, str] | None = None,
     ) -> dict[str, Any]:
@@ -345,6 +361,9 @@ class Messages:
             carrier: Filter by carrier.
             start_date: ISO-8601 date or timestamp; normalized to start-of-UTC-day (inclusive).
             end_date: ISO-8601 date or timestamp; normalized to end-of-UTC-day (inclusive). Hourly resolution is not supported.
+            channel: Filter by channel — "tenDLC" or "tollFree" (single value or list). Opt-outs are
+                A2P-only, so "p2p" applies no filter. A tenDLC selection also includes older opt-outs
+                with no channel.
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
 
@@ -360,6 +379,7 @@ class Messages:
             "carrier": carrier,
             "startDate": start_date,
             "endDate": end_date,
+            "channel": channel,
         })
         return self._sdk._request(
             f"/message/dnc/analytics{query_string}",
@@ -383,6 +403,7 @@ class Messages:
         limit: int | None = None,
         sort_field: str | None = None,
         sort_order: str | None = None,
+        channel: str | list[str] | None = None,
         token: str | None = None,
         headers: dict[str, str] | None = None,
     ) -> dict[str, Any]:
@@ -401,6 +422,9 @@ class Messages:
             limit: Number of records per page.
             sort_field: Field to sort by.
             sort_order: Sort direction (asc, desc).
+            channel: Filter by channel — "tenDLC" or "tollFree" (single value or list). Opt-outs are
+                A2P-only, so "p2p" applies no filter. A tenDLC selection also includes older opt-outs
+                with no channel.
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
 
@@ -420,6 +444,7 @@ class Messages:
             "limit": limit,
             "sortField": sort_field,
             "sortOrder": sort_order,
+            "channel": channel,
         })
         return self._sdk._request(
             f"/message/dnc{query_string}",

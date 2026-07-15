@@ -13,6 +13,7 @@ from .onboarding import Onboarding
 from .shortlinks import Shortlinks
 from .subgroups import Subgroups
 from .subscriptions import Subscriptions
+from .tickets import Tickets
 from .users import Users
 from .webhooks import Webhooks
 
@@ -30,6 +31,7 @@ __all__ = [
     "Shortlinks",
     "Subgroups",
     "Subscriptions",
+    "Tickets",
     "Users",
     "Webhooks",
 ]

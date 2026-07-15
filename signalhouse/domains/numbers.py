@@ -136,6 +136,38 @@ class Numbers:
             headers=headers,
         )
 
+    def get_number_health(
+        self,
+        phone_number: str,
+        *,
+        token: str | None = None,
+        headers: dict[str, str] | None = None,
+    ) -> dict[str, Any]:
+        """Get the portal-parity health score (1–10) for an owned phone number.
+
+        Returns 7-day and 30-day score breakdowns matching the portal Numbers table.
+
+        Args:
+            phone_number: Owned phone number to score (11 digits, no + prefix).
+            token: Optional bearer token for authentication.
+            headers: Additional headers to include in the request.
+
+        Returns:
+            Standardized response dict with ``phoneNumber``, ``groupId``,
+            ``sevenDay``, and ``thirtyDay`` fields.
+
+        Raises:
+            SignalHouseValidationError: If phone_number is missing.
+        """
+        self._sdk._require({"phoneNumber": phone_number})
+        query_string = self._sdk._get_query_string({"phoneNumber": phone_number})
+        return self._sdk._request(
+            f"/number/health{query_string}",
+            method="GET",
+            token=token,
+            headers=headers,
+        )
+
     def get_available_phone_numbers(
         self,
         *,
@@ -221,6 +253,75 @@ class Numbers:
             "/number",
             method="POST",
             body={"phoneNumbers": phone_numbers, "subgroupId": subgroup_id},
+            token=token,
+            headers=headers,
+        )
+
+    def purchase_toll_free_numbers(
+        self,
+        quantity: int,
+        subgroup_id: str,
+        *,
+        token: str | None = None,
+        headers: dict[str, str] | None = None,
+    ) -> dict[str, Any]:
+        """Purchase one or more Toll-Free numbers via the asynchronous resource-request flow.
+
+        Toll-Free numbers are ordered by quantity (not picked individually) and provisioned
+        asynchronously; per-number completion is delivered via webhook/polling, not in this
+        response. Poll the returned ``orderId`` with ``get_toll_free_order_status``.
+
+        Args:
+            quantity: The number of Toll-Free numbers to purchase (1-10).
+            subgroup_id: The subgroup the purchased numbers are assigned to.
+            token: Optional bearer token for authentication.
+            headers: Additional headers to include in the request.
+
+        Returns:
+            Standardized response dict resolving to ``{message, orderId}`` once the request is queued.
+
+        Raises:
+            SignalHouseValidationError: If quantity or subgroup_id is missing.
+        """
+        self._sdk._require({"quantity": quantity, "subgroupId": subgroup_id})
+        return self._sdk._request(
+            "/number/toll-free",
+            method="POST",
+            body={"quantity": quantity, "subgroupId": subgroup_id},
+            token=token,
+            headers=headers,
+        )
+
+    def get_toll_free_order_status(
+        self,
+        order_id: str,
+        *,
+        token: str | None = None,
+        headers: dict[str, str] | None = None,
+    ) -> dict[str, Any]:
+        """Read the outcome of a Toll-Free number purchase by its order ID.
+
+        Reports per-number ready/provisioning/failed counts (plus failure reasons) and the
+        provisioned numbers; ``numbers`` fills in as the order completes, so poll until the order
+        reaches a terminal state.
+
+        Args:
+            order_id: The order id returned by ``purchase_toll_free_numbers``.
+            token: Optional bearer token for authentication.
+            headers: Additional headers to include in the request.
+
+        Returns:
+            Standardized response dict resolving to
+            ``{orderId, counts: {ready, provisioning, failed}, failures: [{reason}], numbers: []}``.
+
+        Raises:
+            SignalHouseValidationError: If order_id is missing.
+        """
+        self._sdk._require({"orderId": order_id})
+        safe_order_id = quote(str(order_id), safe="")
+        return self._sdk._request(
+            f"/number/toll-free/order/{safe_order_id}",
+            method="GET",
             token=token,
             headers=headers,
         )

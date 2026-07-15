@@ -1,4 +1,8 @@
-"""Brands domain for the SignalHouse SDK."""
+"""Brands domain for the SignalHouse SDK.
+
+Brand lookup id: carrier Brand ID (B… or TFNB…), Mongo _id, or internal reference UUID.
+Read/create responses return ``brandId: null`` for pending brands — poll ``GET /brand?id=<Mongo _id>``.
+"""
 
 from __future__ import annotations
 
@@ -25,24 +29,27 @@ class Brands:
         page: int | None = None,
         limit: int | None = None,
         status: str | None = None,
+        registration_type: str | None = None,
         token: str | None = None,
         headers: dict[str, str] | None = None,
     ) -> dict[str, Any]:
         """Get a list of brands with optional filters.
 
         Args:
-            id: The ID of the brand to filter by.
+            id: Brand lookup id (carrier Brand ID, Mongo _id, or internal reference).
             subgroup_id: The ID of the subgroup to filter by.
             group_id: The ID of the group to filter by.
             page: The page number for pagination.
             limit: The number of items per page.
             status: The status of the brand to filter by (PENDING_CREATION, PENDING_APPROVAL,
                     UNVERIFIED, VERIFIED, VETTED_VERIFIED, PENDING_DELETE, DELETED).
+            registration_type: Optional registration-type filter ("TEN_DLC" or "TOLL_FREE").
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
 
         Returns:
-            Standardized response dict.
+            Standardized response dict. Each brand may have ``brandId: null`` until a carrier
+            Brand ID is assigned — use ``_id`` for polling.
         """
         query_string = self._sdk._get_query_string({
             "id": id,
@@ -51,6 +58,7 @@ class Brands:
             "page": page,
             "limit": limit,
             "status": status,
+            "registrationType": registration_type,
         })
         return self._sdk._request(
             f"/brand{query_string}",
@@ -69,7 +77,7 @@ class Brands:
         """Get external vetting information for a brand.
 
         Args:
-            brand_id: The ID of the brand to get the external vetting information for.
+            brand_id: Brand lookup id (carrier Brand ID, Mongo _id, or internal reference).
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
 
@@ -105,7 +113,7 @@ class Brands:
             headers: Additional headers to include in the request.
 
         Returns:
-            Standardized response dict.
+            Standardized response dict. ``brandId`` may be ``null`` until carrier assignment — use ``_id`` to poll.
 
         Raises:
             SignalHouseValidationError: If brand_data is missing.
@@ -113,6 +121,41 @@ class Brands:
         self._sdk._require({"brandData": brand_data})
         return self._sdk._request(
             "/brand",
+            method="POST",
+            body=brand_data,
+            token=token,
+            headers=headers,
+        )
+
+    def create_toll_free_brand(
+        self,
+        brand_data: dict[str, Any],
+        *,
+        token: str | None = None,
+        headers: dict[str, str] | None = None,
+    ) -> dict[str, Any]:
+        """Create a new Toll-Free (TFN) brand.
+
+        registrationType is forced to TOLL_FREE server-side; TFN-specific fields live under
+        ``brand_data["tollFree"]`` (businessRegistrationType, legalEntityType, taxId, countryCode,
+        supportPhone, and optional taxIdIssuingCountry / businessDBA).
+
+        Args:
+            brand_data: The data for the toll-free brand to be created (see API docs for required
+                        fields, including the ``tollFree`` sub-object).
+            token: Optional bearer token for authentication.
+            headers: Additional headers to include in the request.
+
+        Returns:
+            Standardized response dict. For Toll-Free, ``brandId`` is a ``TFNB``-prefixed id when
+            assigned; otherwise ``null`` — use ``_id`` to poll.
+
+        Raises:
+            SignalHouseValidationError: If brand_data is missing.
+        """
+        self._sdk._require({"brandData": brand_data})
+        return self._sdk._request(
+            "/brand/toll-free",
             method="POST",
             body=brand_data,
             token=token,
@@ -131,7 +174,7 @@ class Brands:
 
         Args:
             subgroup_id: The ID of the subgroup to transfer the brands to.
-            brand_ids: The IDs of the brands to be transferred.
+            brand_ids: Brand lookup ids to transfer (carrier id, Mongo _id, or internal reference).
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
 
@@ -161,7 +204,7 @@ class Brands:
         """Create external vetting for a brand.
 
         Args:
-            brand_id: The ID of the brand to create external vetting for.
+            brand_id: Brand lookup id (carrier Brand ID, Mongo _id, or internal reference).
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
 
@@ -197,7 +240,7 @@ class Brands:
         vettingId and vettingToken. It is synchronous and not billable.
 
         Args:
-            brand_id: The ID of the brand to import external vetting for.
+            brand_id: Brand lookup id (carrier Brand ID, Mongo _id, or internal reference).
             vetting_provider_id: The external vetting provider (AEGIS, WMC, CV).
             vetting_id: The provider-issued vetting / transaction ID to import.
             vetting_token: The provider-issued vetting token (required by some providers, e.g. AEGIS).
@@ -236,8 +279,11 @@ class Brands:
         """Update a brand's information.
 
         Args:
-            brand_id: The ID of the brand to update.
-            brand_data: The data for the brand to be updated.
+            brand_id: Brand lookup id (carrier Brand ID, Mongo _id, or internal reference).
+            brand_data: The data for the brand to be updated. For a Toll-Free brand, pass the
+                        editable Toll-Free fields under a ``tollFree`` sub-object (legalEntityType,
+                        businessRegistrationType, taxId, countryCode, supportPhone,
+                        taxIdIssuingCountry, businessDBA); subgroupId is immutable.
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
 
@@ -267,7 +313,7 @@ class Brands:
         """Revet a brand that is in UNVERIFIED status due to an update after it was previously VERIFIED or VETTED_VERIFIED.
 
         Args:
-            brand_id: The ID of the brand to revert.
+            brand_id: Brand lookup id (carrier Brand ID, Mongo _id, or internal reference).
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
 
@@ -296,7 +342,7 @@ class Brands:
         """Delete a brand (mark it as DELETED). The brand will still be retrievable.
 
         Args:
-            brand_id: The ID of the brand to delete.
+            brand_id: Brand lookup id (carrier Brand ID, Mongo _id, or internal reference).
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
 
@@ -325,7 +371,7 @@ class Brands:
         """Get the appeal history for a brand.
 
         Args:
-            brand_id: The ID of the brand to get the appeal history for.
+            brand_id: Brand lookup id (carrier Brand ID, Mongo _id, or internal reference).
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
 
@@ -357,7 +403,7 @@ class Brands:
         """Submit an appeal for a brand.
 
         Args:
-            brand_id: The ID of the brand to submit the appeal for.
+            brand_id: Brand lookup id (carrier Brand ID, Mongo _id, or internal reference).
             appeal_categories: A list of appeal category strings.
             explanation: The explanation for the appeal.
             file: The file to attach to the appeal. Can be a file-like object or
