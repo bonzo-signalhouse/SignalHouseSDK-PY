@@ -123,6 +123,52 @@ class SipTrunks:
             f"/voice/sip-trunks/{safe_id}/regenerate-password", method="POST", token=token, headers=headers,
         )
 
+    def assign_numbers(
+        self,
+        id: str,
+        phone_numbers: list[str],
+        *,
+        token: str | None = None,
+        headers: dict[str, str] | None = None,
+    ) -> dict[str, Any]:
+        """Assign phone numbers to a SIP trunk for outbound caller ID / inbound routing.
+
+        Returns ``{ "assigned": [...], "skipped": [...] }``.
+        ``POST /voice/sip-trunks/:id/assign-numbers``.
+        """
+        self._sdk._require({"id": id, "phoneNumbers": phone_numbers})
+        safe_id = quote(str(id), safe="")
+        return self._sdk._request(
+            f"/voice/sip-trunks/{safe_id}/assign-numbers",
+            method="POST",
+            body={"phoneNumbers": phone_numbers},
+            token=token,
+            headers=headers,
+        )
+
+    def unassign_numbers(
+        self,
+        id: str,
+        phone_numbers: list[str],
+        *,
+        token: str | None = None,
+        headers: dict[str, str] | None = None,
+    ) -> dict[str, Any]:
+        """Unassign phone numbers from a SIP trunk.
+
+        Returns ``{ "unassigned": [...] }``.
+        ``POST /voice/sip-trunks/:id/unassign-numbers``.
+        """
+        self._sdk._require({"id": id, "phoneNumbers": phone_numbers})
+        safe_id = quote(str(id), safe="")
+        return self._sdk._request(
+            f"/voice/sip-trunks/{safe_id}/unassign-numbers",
+            method="POST",
+            body={"phoneNumbers": phone_numbers},
+            token=token,
+            headers=headers,
+        )
+
     def get_pops(
         self,
         *,

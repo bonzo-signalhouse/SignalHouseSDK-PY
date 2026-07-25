@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from typing import Any, TYPE_CHECKING
+import json
+from typing import Any, BinaryIO, TYPE_CHECKING
 from urllib.parse import quote
 
 if TYPE_CHECKING:
@@ -80,6 +81,14 @@ class NumbersAdmin:
             token=token,
             headers=headers,
         )
+
+    def get_short_code_acquisition_requests(
+        self, *, page: int | None = None, limit: int | None = None, status: str | None = None,
+        search: str | None = None, token: str | None = None, headers: dict[str, str] | None = None,
+    ) -> dict[str, Any]:
+        """List staff-only, campaign-bound Short Code acquisition requests."""
+        query_string = self._sdk._get_query_string({"page": page, "limit": limit, "status": status, "search": search})
+        return self._sdk._request(f"/number/short-code/requests{query_string}", method="GET", token=token, headers=headers)
 
 
 class Numbers:
@@ -288,6 +297,55 @@ class Numbers:
             "/number/toll-free",
             method="POST",
             body={"quantity": quantity, "subgroupId": subgroup_id},
+            token=token,
+            headers=headers,
+        )
+
+    def request_short_code_acquisition(
+        self,
+        subgroup_id: str,
+        brand_id: str,
+        campaign_id: str,
+        request_type: str,
+        *,
+        existing_phone_number: str | None = None,
+        lease_term_months: int | None = None,
+        requested_vanity_code: str | None = None,
+        actual_code: str | None = None,
+        order_id: str | None = None,
+        lease_end_date: str | None = None,
+        lease_receipt_file: BinaryIO | tuple | None = None,
+        token: str | None = None,
+        headers: dict[str, str] | None = None,
+    ) -> dict[str, Any]:
+        """Request a campaign-bound Short Code acquisition or register a customer-owned Registry lease.
+
+        INVENTORY soft-holds an existing unassigned Short Code. RANDOM and VANITY requests are fulfilled by Signal
+        House staff. EXTERNAL_LEASE creates a pending Short Code number immediately; it becomes READY only when its campaign becomes ACTIVE.
+        An EXTERNAL_LEASE request requires ``lease_receipt_file``, a PNG, JPEG, or PDF file-like object or
+        ``(filename, file_object, content_type)`` tuple.
+        """
+        self._sdk._require({"subgroupId": subgroup_id, "brandId": brand_id, "campaignId": campaign_id, "requestType": request_type})
+        acquisition_data = {
+            "subgroupId": subgroup_id,
+            "brandId": brand_id,
+            "campaignId": campaign_id,
+            "requestType": request_type,
+            "existingPhoneNumber": existing_phone_number,
+            "leaseTermMonths": lease_term_months,
+            "requestedVanityCode": requested_vanity_code,
+            "actualCode": actual_code,
+            "orderId": order_id,
+            "leaseEndDate": lease_end_date,
+        }
+        files_list: list[tuple[str, Any]] = []
+        if lease_receipt_file is not None:
+            files_list.append(("leaseReceipt", lease_receipt_file))
+        return self._sdk._multipart_request(
+            "/number/short-code",
+            method="POST",
+            form_data={"acquisitionData": json.dumps(acquisition_data)},
+            files=files_list,
             token=token,
             headers=headers,
         )

@@ -478,7 +478,16 @@ class Messages:
             headers: Additional headers to include in the request.
 
         Returns:
-            Standardized response dict.
+            Standardized response dict. The payload reports the send outcome with three fields so
+            callers need not inspect insertedMessages: requestedRecipientCount, enqueuedCount, and
+            failedCount. enqueuedCount is the number of recipients accepted for delivery and is 0
+            when the send was fully blocked (by the moderation filter or a campaign opt-out); the
+            request still succeeds in that case, so treat enqueuedCount, not the HTTP status, as the
+            signal that a message was accepted. Blocked recipients are returned in insertedMessages
+            with status "FAILED"; recipients on the global Do Not Contact list are reported in
+            dncBlockedNumbers with no message record. Each FAILED message carries errorCode, a stable
+            machine-readable cause (campaign opt-out is "OUT"; None on success or on failures with no
+            assigned code) that is also included on the FAILED status-callback payload.
 
         Raises:
             SignalHouseValidationError: If required parameters are missing.
@@ -512,6 +521,8 @@ class Messages:
         message_body: str,
         *,
         status_callback_url: str | None = None,
+        group_id: str | None = None,
+        subgroup_id: str | None = None,
         use_signal_house_shortlinks: bool | None = None,
         token: str | None = None,
         headers: dict[str, str] | None = None,
@@ -522,6 +533,12 @@ class Messages:
             recipient_phone_numbers: The phone number(s) to send the message to.
             message_body: The body of the P2P message.
             status_callback_url: The URL to receive status callbacks.
+            group_id: Explicit group to send from. Defaults to the group in your
+                auth context.
+            subgroup_id: Explicit subgroup to attribute the send (and its inbound
+                reply) to. P2P has no dedicated sender number, so pass this to record
+                the send against a specific subgroup; it also resolves the group.
+                Defaults to the group's oldest subgroup.
             use_signal_house_shortlinks: When false, SignalHouse applies no
                 link-shortening or text-spin and your pre-spun links/content are
                 sent verbatim (bring-your-own spinner). Defaults to true.
@@ -544,6 +561,10 @@ class Messages:
         }
         if status_callback_url is not None:
             body["statusCallbackUrl"] = status_callback_url
+        if group_id is not None:
+            body["groupId"] = group_id
+        if subgroup_id is not None:
+            body["subgroupId"] = subgroup_id
         if use_signal_house_shortlinks is not None:
             body["useSignalHouseShortlinks"] = use_signal_house_shortlinks
         return self._sdk._request(
@@ -632,6 +653,15 @@ class Messages:
     ) -> dict[str, Any]:
         """Send an MMS message to one or more recipients, with optional media attachments.
 
+        The response reports the send outcome via requestedRecipientCount, enqueuedCount, and
+        failedCount. enqueuedCount is the number of recipients accepted for delivery and is 0 when
+        the send was fully blocked (moderation filter or campaign opt-out); the request still
+        succeeds in that case, so treat enqueuedCount, not the HTTP status, as the signal that a
+        message was accepted. Blocked recipients are returned in insertedMessages with status
+        "FAILED"; global Do Not Contact recipients are reported in dncBlockedNumbers with no message
+        record. Each FAILED message carries errorCode (campaign opt-out is "OUT"; None otherwise),
+        also included on the FAILED status-callback payload.
+
         Args:
             sender_phone_number: The phone number to send the message from.
             recipient_phone_numbers: The phone number(s) to send the message to.
@@ -711,6 +741,15 @@ class Messages:
         headers: dict[str, str] | None = None,
     ) -> dict[str, Any]:
         """Send a group MMS message to one or more recipients, with optional media attachments.
+
+        The response reports the send outcome via requestedRecipientCount, enqueuedCount, and
+        failedCount. enqueuedCount is the number of recipients accepted for delivery and is 0 when
+        the send was fully blocked (moderation filter or campaign opt-out); the request still
+        succeeds in that case, so treat enqueuedCount, not the HTTP status, as the signal that a
+        message was accepted. Blocked recipients are returned in insertedMessages with status
+        "FAILED"; global Do Not Contact recipients are reported in dncBlockedNumbers with no message
+        record. Each FAILED message carries errorCode (campaign opt-out is "OUT"; None otherwise),
+        also included on the FAILED status-callback payload.
 
         Args:
             sender_phone_number: The phone number to send the message from.

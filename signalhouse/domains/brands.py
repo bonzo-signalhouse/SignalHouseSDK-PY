@@ -43,7 +43,7 @@ class Brands:
             limit: The number of items per page.
             status: The status of the brand to filter by (PENDING_CREATION, PENDING_APPROVAL,
                     UNVERIFIED, VERIFIED, VETTED_VERIFIED, PENDING_DELETE, DELETED).
-            registration_type: Optional registration-type filter ("TEN_DLC" or "TOLL_FREE").
+            registration_type: Optional registration-type filter ("TEN_DLC", "TOLL_FREE", or "SHORT_CODE").
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
 
@@ -158,6 +158,54 @@ class Brands:
             "/brand/toll-free",
             method="POST",
             body=brand_data,
+            token=token,
+            headers=headers,
+        )
+
+    def create_short_code_brand(
+        self,
+        brand_data: dict[str, Any],
+        *,
+        token: str | None = None,
+        headers: dict[str, str] | None = None,
+    ) -> dict[str, Any]:
+        """Create a local Short Code brand for manual Signal House review.
+
+        The route forces the ``SHORT_CODE`` registration type. The payload requires standard contact
+        and address fields plus ``shortCode`` with businessRegistrationType, legalEntityType, taxId,
+        countryCode, and supportPhone. The synchronous response is a 201-created record in
+        ``PENDING_APPROVAL`` with a stable ``SCB``-prefixed brandId.
+        """
+        self._sdk._require({"brandData": brand_data})
+        return self._sdk._request("/brand/short-code", method="POST", body=brand_data, token=token, headers=headers)
+
+    def approve_short_code_brand(
+        self,
+        brand_id: str,
+        *,
+        token: str | None = None,
+        headers: dict[str, str] | None = None,
+    ) -> dict[str, Any]:
+        """Approve a pending Short Code brand. Available only to signalhouse_admin."""
+        self._sdk._require({"brandId": brand_id})
+        safe_brand_id = quote(str(brand_id), safe="")
+        return self._sdk._request(f"/brand/approve/{safe_brand_id}", method="POST", token=token, headers=headers)
+
+    def reject_short_code_brand(
+        self,
+        brand_id: str,
+        internal_rejection_reason: str,
+        *,
+        token: str | None = None,
+        headers: dict[str, str] | None = None,
+    ) -> dict[str, Any]:
+        """Reject a pending Short Code brand with its required customer-visible reason. signalhouse_admin only."""
+        self._sdk._require({"brandId": brand_id, "internalRejectionReason": internal_rejection_reason})
+        safe_brand_id = quote(str(brand_id), safe="")
+        return self._sdk._request(
+            f"/brand/reject/{safe_brand_id}",
+            method="POST",
+            body={"internalRejectionReason": internal_rejection_reason},
             token=token,
             headers=headers,
         )

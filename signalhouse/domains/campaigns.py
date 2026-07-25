@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from typing import Any, BinaryIO, TYPE_CHECKING
 from urllib.parse import quote
 
@@ -76,6 +77,63 @@ class CampaignsAdmin:
             token=token,
             headers=headers,
         )
+
+    def update_short_code_campaign_status(
+        self,
+        campaign_id: str,
+        *,
+        status: str,
+        rejection_reason: str | None = None,
+        token: str | None = None,
+        headers: dict[str, str] | None = None,
+    ) -> dict[str, Any]:
+        """Transition a Short Code campaign's review status (SHGHL-2225).
+
+        A customer-visible reason is required for both rejection states ("REJECTED" = Signal
+        House Rejected, "DCA_REJECTED" = Rejected). Fulfillment and carrier submission are
+        dedicated staff operations.
+
+        Args:
+            campaign_id: The ID of the campaign to transition.
+            status: The target status: "PENDING_REVIEW", "REJECTED", "PENDING_CREATION",
+                "DCA_REJECTED", or "ACTIVE". Use submit_short_code_campaign_to_carrier
+                for "PENDING_DCA_APPROVAL".
+            rejection_reason: Required for "REJECTED"/"DCA_REJECTED" (10-1024 characters).
+            token: Optional bearer token for authentication.
+            headers: Additional headers to include in the request.
+
+        Returns:
+            Standardized response dict containing the updated campaign.
+
+        Raises:
+            SignalHouseValidationError: If campaign_id or status is missing.
+        """
+        self._sdk._require({"campaignId": campaign_id, "status": status})
+        safe_campaign_id = quote(str(campaign_id), safe="")
+        return self._sdk._request(
+            f"/campaign/short-code/{safe_campaign_id}/status",
+            method="PUT",
+            body={"status": status, "rejectionReason": rejection_reason},
+            token=token,
+            headers=headers,
+        )
+
+    def fulfill_short_code_campaign(
+        self, campaign_id: str, actual_code: str, *, internal_notes: str | None = None,
+        token: str | None = None, headers: dict[str, str] | None = None,
+    ) -> dict[str, Any]:
+        """Record the issued code for a campaign-bound Signal House Short Code request."""
+        self._sdk._require({"campaignId": campaign_id, "actualCode": actual_code})
+        safe_campaign_id = quote(str(campaign_id), safe="")
+        return self._sdk._request(f"/campaign/short-code/{safe_campaign_id}/fulfill", method="POST", body={"actualCode": actual_code, "internalNotes": internal_notes}, token=token, headers=headers)
+
+    def submit_short_code_campaign_to_carrier(
+        self, campaign_id: str, *, token: str | None = None, headers: dict[str, str] | None = None,
+    ) -> dict[str, Any]:
+        """Submit an internally approved and fully prepared Short Code campaign to carrier review."""
+        self._sdk._require({"campaignId": campaign_id})
+        safe_campaign_id = quote(str(campaign_id), safe="")
+        return self._sdk._request(f"/campaign/short-code/{safe_campaign_id}/submit-to-carrier", method="POST", token=token, headers=headers)
 
 
 class Campaigns:
@@ -228,6 +286,150 @@ class Campaigns:
             "/campaign/toll-free",
             method="POST",
             body=campaign_data,
+            token=token,
+            headers=headers,
+        )
+
+    def create_short_code_campaign(
+        self,
+        campaign_data: dict[str, Any],
+        *,
+        token: str | None = None,
+        headers: dict[str, str] | None = None,
+    ) -> dict[str, Any]:
+        """Create a new Short Code campaign and submit it for Signal House review (SHGHL-2225).
+
+        Requires an approved (VERIFIED) Short Code brand. ``campaign_data["shortCode"]["optInUrl"]``
+        is optional; Signal House uses the brand's ``optInLink`` when it is omitted, then captures its
+        screenshot asynchronously and retries up to three times. Request or register the campaign's
+        Short Code separately through ``numbers.request_short_code_acquisition`` after creation.
+
+        Args:
+            campaign_data: The Short Code campaign data. Top-level fields: brandId,
+                privacyPolicyLink, termsAndConditionsLink, optinMessage, optoutMessage,
+                helpMessage, sample1-3, autoRenewal, tag, and a ``shortCode`` sub-object
+                (useCases, optInMethods, optInMethodDescriptions, messageFrequency,
+                pricingTier, adultContent, doubleOptInMessage, programSummary,
+                optInConfirmationMessage, optInUrl).
+            token: Optional bearer token for authentication.
+            headers: Additional headers to include in the request.
+
+        Returns:
+            Standardized response dict containing the created campaign.
+
+        Raises:
+            SignalHouseValidationError: If campaign_data is missing.
+        """
+        self._sdk._require({"campaignData": campaign_data})
+        return self._sdk._multipart_request(
+            "/campaign/short-code",
+            method="POST",
+            form_data={"campaignData": json.dumps(campaign_data)},
+            files=[],
+            token=token,
+            headers=headers,
+        )
+
+    def update_short_code_campaign(
+        self,
+        campaign_id: str,
+        update_data: dict[str, Any],
+        *,
+        token: str | None = None,
+        headers: dict[str, str] | None = None,
+    ) -> dict[str, Any]:
+        """Update a Short Code campaign's editable fields (SHGHL-2225).
+
+        Only permitted while the campaign is in Signal House Review or Signal House Rejected
+        status; the number source cannot be changed once submitted.
+
+        Args:
+            campaign_id: The ID of the campaign to update.
+            update_data: The fields to update (top-level campaign fields plus an optional
+                ``shortCode`` object of editable Short Code fields).
+            token: Optional bearer token for authentication.
+            headers: Additional headers to include in the request.
+
+        Returns:
+            Standardized response dict containing the updated campaign.
+
+        Raises:
+            SignalHouseValidationError: If campaign_id is missing.
+        """
+        self._sdk._require({"campaignId": campaign_id})
+        safe_campaign_id = quote(str(campaign_id), safe="")
+        return self._sdk._request(
+            f"/campaign/short-code/{safe_campaign_id}",
+            method="PUT",
+            body=update_data,
+            token=token,
+            headers=headers,
+        )
+
+    def cancel_short_code_campaign(
+        self,
+        campaign_id: str,
+        *,
+        token: str | None = None,
+        headers: dict[str, str] | None = None,
+    ) -> dict[str, Any]:
+        """Cancel a Short Code campaign (SHGHL-2225).
+
+        Customers may cancel only while the campaign is in Signal House Review or Signal House
+        Rejected status; Signal House staff may cancel from any non-terminal status. Persists as
+        "EXPIRED" (displayed as "Cancelled"). A real Registry lease (external or an
+        already-fulfilled Signal House request) is never auto-released — see SHGHL-2228 for
+        offboarding.
+
+        Args:
+            campaign_id: The ID of the campaign to cancel.
+            token: Optional bearer token for authentication.
+            headers: Additional headers to include in the request.
+
+        Returns:
+            Standardized response dict containing the cancelled campaign.
+
+        Raises:
+            SignalHouseValidationError: If campaign_id is missing.
+        """
+        self._sdk._require({"campaignId": campaign_id})
+        safe_campaign_id = quote(str(campaign_id), safe="")
+        return self._sdk._request(
+            f"/campaign/short-code/{safe_campaign_id}/cancel",
+            method="POST",
+            token=token,
+            headers=headers,
+        )
+
+    def read_campaign_artifact(
+        self,
+        artifact_id: str,
+        *,
+        token: str | None = None,
+        headers: dict[str, str] | None = None,
+    ) -> dict[str, Any]:
+        """Download a private Short Code external lease receipt.
+
+        Opt-in screenshots are public at the ``shortCode.screenshotUrl`` returned on the campaign.
+        Authorized to the owning group's users or Signal House staff only.
+
+        Args:
+            artifact_id: The receipt identifier from
+                ``numberSource.externalLease.receiptArtifactId`` on a Short Code campaign.
+            token: Optional bearer token for authentication.
+            headers: Additional headers to include in the request.
+
+        Returns:
+            Standardized response dict containing the raw file bytes.
+
+        Raises:
+            SignalHouseValidationError: If artifact_id is missing.
+        """
+        self._sdk._require({"artifactId": artifact_id})
+        safe_artifact_id = quote(str(artifact_id), safe="")
+        return self._sdk._request(
+            f"/campaign/short-code/artifact/{safe_artifact_id}",
+            method="GET",
             token=token,
             headers=headers,
         )
