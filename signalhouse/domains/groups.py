@@ -100,6 +100,41 @@ class GroupsAdmin:
             headers=headers,
         )
 
+    def update_compliance_status(
+        self,
+        group_id: str,
+        compliance_status: str,
+        *,
+        token: str | None = None,
+        headers: dict[str, str] | None = None,
+    ) -> dict[str, Any]:
+        """Set a group's KYC compliance_status (SHGHL-2740).
+
+        Only flips the field — it does not trigger any lockout side effects (halted sends,
+        revoked API keys, etc.) for "rejected".
+
+        Args:
+            group_id: The ID of the group to update.
+            compliance_status: One of "unverified", "pending", "verified", "rejected".
+            token: Optional bearer token for authentication.
+            headers: Additional headers to include in the request.
+
+        Returns:
+            Standardized response dict.
+
+        Raises:
+            SignalHouseValidationError: If group_id or compliance_status is missing.
+        """
+        self._sdk._require({"groupId": group_id, "complianceStatus": compliance_status})
+        safe_group_id = quote(str(group_id), safe="")
+        return self._sdk._request(
+            f"/group/{safe_group_id}/compliance-status",
+            method="PUT",
+            body={"complianceStatus": compliance_status},
+            token=token,
+            headers=headers,
+        )
+
     def link_external(
         self,
         link_token: str,

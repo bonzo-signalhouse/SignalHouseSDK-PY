@@ -8,6 +8,7 @@ Groups all voice-service sub-resources under a single namespace, accessed via
 * ``sdk.voice.programmable_voice_profiles`` — Programmable Voice Profile (route a set of numbers through Signal House).
 * ``sdk.voice.calls``                      — Outbound call origination + call log queries.
 * ``sdk.voice.call_logs``                  — Account-scoped call history: list/get + presigned recording.
+* ``sdk.voice.analytics``                  — Aggregated call metrics (summary tiles + byDate/byNumber/byCarrier breakdowns).
 * ``sdk.voice.tokens``                     — Mint ephemeral SIP credentials for the browser voice SDK.
 * ``sdk.voice.global_voice_settings``      — Account-wide voice defaults (accepted regions, max spend, E911).
 """
@@ -21,6 +22,7 @@ from .sip_profiles import SipProfiles
 from .programmable_voice_profiles import ProgrammableVoiceProfiles
 from .calls import Calls
 from .call_logs import CallLogs
+from .analytics import Analytics
 from .tokens import Tokens
 from .global_voice_settings import GlobalVoiceSettings
 
@@ -38,8 +40,9 @@ class Voice:
         self.programmable_voice_profiles = ProgrammableVoiceProfiles(sdk)
         self.calls = Calls(sdk)
         self.call_logs = CallLogs(sdk)
+        self.analytics = Analytics(sdk)
         self.tokens = Tokens(sdk)
         self.global_voice_settings = GlobalVoiceSettings(sdk)
 
 
-__all__ = ["Voice", "SipTrunks", "SipProfiles", "ProgrammableVoiceProfiles", "Calls", "CallLogs", "Tokens", "GlobalVoiceSettings"]
+__all__ = ["Voice", "SipTrunks", "SipProfiles", "ProgrammableVoiceProfiles", "Calls", "CallLogs", "Analytics", "Tokens", "GlobalVoiceSettings"]

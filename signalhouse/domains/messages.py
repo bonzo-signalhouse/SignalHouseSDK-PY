@@ -11,7 +11,11 @@ if TYPE_CHECKING:
 
 
 class Messages:
-    """SMS/MMS messaging operations with multipart file upload support."""
+    """SMS/MMS messaging operations with multipart file upload support.
+
+    Business-number filters and SMS/MMS senders accept digits-only 5-6 digit
+    Short Codes or 10+ digit long numbers. Recipient numbers remain 10+ digits.
+    """
 
     def __init__(self, sdk: SignalHouseSDK) -> None:
         self._sdk = sdk
@@ -52,7 +56,7 @@ class Messages:
             status: Filter by status (ENQUEUED, DEQUEUED, SENT, FAILED, DELIVERED).
             direction: Filter by direction (INBOUND, OUTBOUND).
             message_type: Filter by type (SMS, MMS).
-            channel: Filter by channel — "tenDLC", "tollFree", or "p2p" (single value or list).
+            channel: Filter by channel — "tenDLC", "tollFree", "shortCode", or "p2p" (single value or list).
                 Filters on each message's stored channel; older messages without one count as tenDLC.
             carrier: Filter by carrier used for sending.
             sender_phone_number: Filter by sender phone number.
@@ -123,7 +127,7 @@ class Messages:
             carrier: Filter analytics by carrier.
             start_date: ISO-8601 date or timestamp; normalized to start-of-UTC-day (inclusive).
             end_date: ISO-8601 date or timestamp; normalized to end-of-UTC-day (inclusive). Hourly resolution is not supported.
-            channel: Filter by channel — "tenDLC", "tollFree", or "p2p" (single value or list).
+            channel: Filter by channel — "tenDLC", "tollFree", "shortCode", or "p2p" (single value or list).
                 Filters on the stored channel; a tenDLC selection also includes older messages with
                 no channel, and p2p is matched by carrier.
             token: Optional bearer token for authentication.
@@ -176,7 +180,7 @@ class Messages:
             carrier: Filter analytics by carrier.
             start_date: ISO-8601 date or timestamp; normalized to start-of-UTC-day (inclusive).
             end_date: ISO-8601 date or timestamp; normalized to end-of-UTC-day (inclusive). Hourly resolution is not supported.
-            channel: Filter by channel — "tenDLC", "tollFree", or "p2p" (single value or list).
+            channel: Filter by channel — "tenDLC", "tollFree", "shortCode", or "p2p" (single value or list).
                 Filters on the stored channel; a tenDLC selection also includes older messages with
                 no channel, and p2p is a real channel here.
             token: Optional bearer token for authentication.
@@ -257,7 +261,7 @@ class Messages:
         Args:
             page: Page number (default 1).
             limit: Rows per page, max 50.
-            channel: "both" (default, all activity) or "tenDLC" / "tollFree" / "p2p" (single value
+            channel: "both" (default, all activity) or "tenDLC" / "tollFree" / "shortCode" / "p2p" (single value
                 or list). Scopes the ORDER BY + row inclusion by the stored channel column so a
                 single-channel caller doesn't get pages dominated by other channels; toll-free is
                 kept separate from 10DLC.
@@ -308,7 +312,7 @@ class Messages:
         Args:
             page: Page number (default 1).
             limit: Rows per page, max 50.
-            channel: "both" (default, every code) or "tenDLC" / "tollFree" / "p2p" (single value
+            channel: "both" (default, every code) or "tenDLC" / "tollFree" / "shortCode" / "p2p" (single value
                 or list). Scopes the ORDER BY + totalCount by the stored channel column; when one
                 channel is selected, totalErrors reflects only that channel.
 
@@ -361,7 +365,7 @@ class Messages:
             carrier: Filter by carrier.
             start_date: ISO-8601 date or timestamp; normalized to start-of-UTC-day (inclusive).
             end_date: ISO-8601 date or timestamp; normalized to end-of-UTC-day (inclusive). Hourly resolution is not supported.
-            channel: Filter by channel — "tenDLC" or "tollFree" (single value or list). Opt-outs are
+            channel: Filter by channel — "tenDLC", "tollFree", or "shortCode" (single value or list). Opt-outs are
                 A2P-only, so "p2p" applies no filter. A tenDLC selection also includes older opt-outs
                 with no channel.
             token: Optional bearer token for authentication.
@@ -422,7 +426,7 @@ class Messages:
             limit: Number of records per page.
             sort_field: Field to sort by.
             sort_order: Sort direction (asc, desc).
-            channel: Filter by channel — "tenDLC" or "tollFree" (single value or list). Opt-outs are
+            channel: Filter by channel — "tenDLC", "tollFree", or "shortCode" (single value or list). Opt-outs are
                 A2P-only, so "p2p" applies no filter. A tenDLC selection also includes older opt-outs
                 with no channel.
             token: Optional bearer token for authentication.
@@ -468,8 +472,11 @@ class Messages:
         """Send an SMS message to one or more recipient phone numbers.
 
         Args:
-            sender_phone_number: The phone number to send the message from.
-            recipient_phone_numbers: The phone number(s) to send the message to.
+            sender_phone_number: The digits-only 5-6 digit Short Code or 10+ digit
+                long number to send the message from.
+            recipient_phone_numbers: The 10+ digit phone number(s) to send the
+                message to. A Short Code sender permits exactly one recipient;
+                the API rejects Short Code sends with multiple recipients.
             message_body: The body of the SMS message.
             status_callback_url: The URL to receive status callbacks.
             enable_shortlink: Whether to enable shortlink in the message.
@@ -663,8 +670,11 @@ class Messages:
         also included on the FAILED status-callback payload.
 
         Args:
-            sender_phone_number: The phone number to send the message from.
-            recipient_phone_numbers: The phone number(s) to send the message to.
+            sender_phone_number: The digits-only 5-6 digit Short Code or 10+ digit
+                long number to send the message from.
+            recipient_phone_numbers: The 10+ digit phone number(s) to send the
+                message to. A Short Code sender permits exactly one recipient;
+                the API rejects Short Code sends with multiple recipients.
             message_body: The body of the MMS message.
             media_urls: The URLs of the media attachments.
             status_callback_url: The URL to receive status callbacks.
@@ -752,7 +762,8 @@ class Messages:
         also included on the FAILED status-callback payload.
 
         Args:
-            sender_phone_number: The phone number to send the message from.
+            sender_phone_number: The 10+ digit long number to send the group
+                message from. Short Codes do not support group messaging.
             recipient_phone_numbers: The phone number(s) to send the message to.
             message_body: The body of the MMS message.
             media_urls: The URLs of the media attachments.

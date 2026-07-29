@@ -132,19 +132,28 @@ class SipProfiles:
     def assign_number(
         self,
         id: str,
-        phone_number_id: str,
+        phone_number_id: str | None = None,
+        e164: str | None = None,
         *,
         token: str | None = None,
         headers: dict[str, str] | None = None,
     ) -> dict[str, Any]:
         """Assign a phone number to this SIP profile (routes inbound calls on
-        that number to the endpoint). ``POST /voice/sip-profiles/:id/assign-number``."""
-        self._sdk._require({"id": id, "phoneNumberId": phone_number_id})
+        that number to the endpoint). ``POST /voice/sip-profiles/:id/assign-number``.
+
+        Prefer ``e164`` (numbers are Mongo-authoritative); the legacy
+        ``phone_number_id`` (a voice-backend phone-number UUID) is still accepted.
+        Provide at least one of the two.
+        """
+        self._sdk._require({"id": id})
+        if not e164 and not phone_number_id:
+            self._sdk._require({"e164": e164})
         safe_id = quote(str(id), safe="")
+        body = {"e164": e164} if e164 else {"phoneNumberId": phone_number_id}
         return self._sdk._request(
             f"/voice/sip-profiles/{safe_id}/assign-number",
             method="POST",
-            body={"phoneNumberId": phone_number_id},
+            body=body,
             token=token,
             headers=headers,
         )
@@ -152,19 +161,27 @@ class SipProfiles:
     def unassign_number(
         self,
         id: str,
-        phone_number_id: str,
+        phone_number_id: str | None = None,
+        e164: str | None = None,
         *,
         token: str | None = None,
         headers: dict[str, str] | None = None,
     ) -> dict[str, Any]:
         """Unassign a phone number from this SIP profile.
-        ``POST /voice/sip-profiles/:id/unassign-number``."""
-        self._sdk._require({"id": id, "phoneNumberId": phone_number_id})
+        ``POST /voice/sip-profiles/:id/unassign-number``.
+
+        Prefer ``e164``; the legacy ``phone_number_id`` (a voice-backend
+        phone-number UUID) is still accepted. Provide at least one of the two.
+        """
+        self._sdk._require({"id": id})
+        if not e164 and not phone_number_id:
+            self._sdk._require({"e164": e164})
         safe_id = quote(str(id), safe="")
+        body = {"e164": e164} if e164 else {"phoneNumberId": phone_number_id}
         return self._sdk._request(
             f"/voice/sip-profiles/{safe_id}/unassign-number",
             method="POST",
-            body={"phoneNumberId": phone_number_id},
+            body=body,
             token=token,
             headers=headers,
         )
