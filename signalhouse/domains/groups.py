@@ -15,6 +15,30 @@ class GroupsAdmin:
     def __init__(self, sdk: SignalHouseSDK) -> None:
         self._sdk = sdk
 
+    def get_group_counts(
+        self,
+        *,
+        group_id: str | None = None,
+        limit: int | None = None,
+        offset: int | None = None,
+        token: str | None = None,
+        headers: dict[str, str] | None = None,
+    ) -> dict[str, Any]:
+        """Get resource counts grouped by group ID.
+
+        Only signalhouse_admin can query all groups; every other allowed role
+        is restricted to its JWT group scope.
+
+        Args:
+            group_id: Optional group ID filter. Serialized as ``groupId``.
+            limit: Maximum rows to return.
+            offset: Rows to skip; requires limit.
+            token: Optional bearer token for authentication.
+            headers: Additional headers to include in the request.
+        """
+        query_string = self._sdk._get_query_string({"groupId": group_id, "limit": limit, "offset": offset})
+        return self._sdk._request(f"/group/counts{query_string}", method="GET", token=token, headers=headers)
+
     def get_groups(
         self,
         *,
@@ -53,6 +77,7 @@ class GroupsAdmin:
 
         Args:
             group_data: The data for the new group, including required fields such as groupName.
+                Optionally accepts psPartnerKey and ownerEmail to credit a referring partner.
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
 

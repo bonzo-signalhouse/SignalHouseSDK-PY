@@ -51,6 +51,24 @@ class Subgroups:
             headers=headers,
         )
 
+    def get_subgroup_counts(
+        self,
+        *,
+        group_id: str | None = None,
+        subgroup_id: str | None = None,
+        limit: int | None = None,
+        offset: int | None = None,
+        token: str | None = None,
+        headers: dict[str, str] | None = None,
+    ) -> dict[str, Any]:
+        """Get resource counts grouped by subgroup ID.
+
+        Only signalhouse_admin can query all groups; every other allowed role
+        is restricted to its JWT group scope.
+        """
+        query_string = self._sdk._get_query_string({"groupId": group_id, "subgroupId": subgroup_id, "limit": limit, "offset": offset})
+        return self._sdk._request(f"/subgroup/counts{query_string}", method="GET", token=token, headers=headers)
+
     def create_subgroup(
         self,
         subgroup_data: dict[str, Any],

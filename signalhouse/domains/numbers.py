@@ -548,7 +548,10 @@ class Numbers:
         token: str | None = None,
         headers: dict[str, str] | None = None,
     ) -> dict[str, Any]:
-        """Assign phone numbers to a campaign.
+        """Assign phone numbers to a campaign. Numbers that are not found, already RELEASED, already
+        assigned to a different campaign, on a mismatched DCA, or (for a 10DLC campaign without a number
+        pool) beyond the remaining 49-number-per-campaign limit are not queued - each is reported back
+        individually in skipped instead of failing the whole request.
 
         Args:
             campaign_id: The ID of the campaign to assign phone numbers to.
@@ -557,7 +560,9 @@ class Numbers:
             headers: Additional headers to include in the request.
 
         Returns:
-            Standardized response dict.
+            Standardized response dict resolving to ``{message, queued, skipped}`` - ``queued`` numbers
+            were sent for assignment; ``skipped`` numbers were rejected (not found, RELEASED, already
+            assigned to a campaign, cross-DCA mismatch, or over the 49-number limit).
 
         Raises:
             SignalHouseValidationError: If campaign_id or phone_numbers is missing.

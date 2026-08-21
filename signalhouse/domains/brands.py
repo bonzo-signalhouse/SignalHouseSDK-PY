@@ -139,6 +139,8 @@ class Brands:
         registrationType is forced to TOLL_FREE server-side; TFN-specific fields live under
         ``brand_data["tollFree"]`` (businessRegistrationType, legalEntityType, taxId, countryCode,
         supportPhone, and optional taxIdIssuingCountry / businessDBA / businessWebsite).
+        ``supportPhone`` must be E.164 with an optional leading ``+`` and no spaces, parentheses
+        or hyphens (e.g. ``"17025550100"``).
 
         Args:
             brand_data: The data for the toll-free brand to be created (see API docs for required
@@ -331,7 +333,9 @@ class Brands:
             brand_data: The data for the brand to be updated. For a Toll-Free brand, pass the
                         editable Toll-Free fields under a ``tollFree`` sub-object (legalEntityType,
                         businessRegistrationType, taxId, countryCode, supportPhone,
-                        taxIdIssuingCountry, businessDBA, businessWebsite); subgroupId is immutable.
+                        taxIdIssuingCountry, businessDBA, businessWebsite); supportPhone must be
+                        E.164 with an optional leading ``+`` and no spaces, parentheses or hyphens
+                        (e.g. ``"17025550100"``); subgroupId is immutable.
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
 

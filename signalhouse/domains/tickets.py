@@ -61,6 +61,31 @@ class TicketsAdmin:
             headers=headers,
         )
 
+    def search_jira_parent_issues(
+        self,
+        *,
+        query: str | None = None,
+        token: str | None = None,
+        headers: dict[str, str] | None = None,
+    ) -> dict[str, Any]:
+        """Search open non-Epic, non-Subtask issues for the Subtask parent picker. Staff-only.
+
+        Args:
+            query: Optional issue summary/key filter.
+            token: Optional bearer token for authentication.
+            headers: Additional headers to include in the request.
+
+        Returns:
+            Standardized response dict with `{ issues: [...] }`.
+        """
+        query_string = self._sdk._get_query_string({"query": query})
+        return self._sdk._request(
+            f"/admin/ticket/jira/parent-issues{query_string}",
+            method="GET",
+            token=token,
+            headers=headers,
+        )
+
     def search_jira_assignees(
         self,
         *,
