@@ -4,7 +4,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="signalhouse",
-    version="1.1.9",
+    version="1.1.10",
     description="Python SDK for the SignalHouse API",
     long_description=open("README.md").read(),
     long_description_content_type="text/markdown",
@@ -12,6 +12,16 @@ setup(
     author_email="support@signalhouse.io",
     url="https://github.com/bonzo-signalhouse/SignalHouseSDK-PY",
     packages=find_packages(),
+    # Keep in step with pyproject.toml: the vendored skills are data files, and the console script
+    # is what places them, since a wheel has no post-install hook (SKILLS-08).
+    package_data={
+        "signalhouse": ["skills/**/*"],
+    },
+    entry_points={
+        "console_scripts": [
+            "signalhouse-skills=signalhouse._skills:main",
+        ],
+    },
     python_requires=">=3.10",
     install_requires=[
         "requests>=2.28.0",

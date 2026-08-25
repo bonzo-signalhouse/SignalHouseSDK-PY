@@ -65,14 +65,17 @@ class ProgrammableVoiceProfiles:
         ``profile_data`` keys (camelCase, as the API expects): ``name`` (required),
         ``subgroupIds`` (required, list of subgroup IDs, at least one), optional
         ``region``, ``routeAction`` (one of ``FORWARD``, ``WEBRTC``, ``SIP_TRUNK``,
-        ``SIP_PROFILE``; default ``FORWARD``) — deliver the call to a PSTN number
-        (``FORWARD``), ring the profile's subgroup registered softphones
-        (``WEBRTC``), send to a SIP trunk (``SIP_TRUNK``), or ring a registered SIP
-        endpoint (``SIP_PROFILE``). Also: ``forwardToE164`` (required when
+        ``SIP_PROFILE``, ``CALL_CONTROL``; default ``FORWARD``) — deliver the call to
+        a PSTN number (``FORWARD``), ring the profile's subgroup registered softphones
+        (``WEBRTC``), send to a SIP trunk (``SIP_TRUNK``), ring a registered SIP
+        endpoint (``SIP_PROFILE``), or hand the call to an inbound voice webhook /
+        SHML program (``CALL_CONTROL``). Also: ``forwardToE164`` (required when
         ``routeAction`` is ``FORWARD``), ``routeSipTrunkId`` (required when
         ``routeAction`` is ``SIP_TRUNK``), ``routeSipProfileId`` (required when
-        ``routeAction`` is ``SIP_PROFILE``), ``forwardAfterSeconds``,
-        ``recordingEnabled``, ``enabled``. Returns ``{ "profile": {...} }``.
+        ``routeAction`` is ``SIP_PROFILE``), ``webhookUrl`` (inbound voice webhook /
+        SHML program URL; required when ``routeAction`` is ``CALL_CONTROL``),
+        ``forwardAfterSeconds``, ``recordingEnabled``, ``enabled``.
+        Returns ``{ "profile": {...} }``.
         """
         self._sdk._require({"profileData": profile_data})
         return self._sdk._request(
@@ -92,10 +95,12 @@ class ProgrammableVoiceProfiles:
 
         ``update_data`` accepts any subset of the create keys (camelCase, as the
         API expects): ``name``, ``subgroupIds``, ``region``, ``routeAction`` (one
-        of ``FORWARD``, ``WEBRTC``, ``SIP_TRUNK``, ``SIP_PROFILE``),
+        of ``FORWARD``, ``WEBRTC``, ``SIP_TRUNK``, ``SIP_PROFILE``, ``CALL_CONTROL``),
         ``forwardToE164`` (required when ``routeAction`` is ``FORWARD``),
         ``routeSipTrunkId`` (required when ``routeAction`` is ``SIP_TRUNK``),
         ``routeSipProfileId`` (required when ``routeAction`` is ``SIP_PROFILE``),
+        ``webhookUrl`` (inbound voice webhook / SHML program URL; required when
+        ``routeAction`` is ``CALL_CONTROL``; pass ``None`` to clear),
         ``forwardAfterSeconds``, ``recordingEnabled``, ``enabled``.
         Returns ``{ "profile": {...} }``."""
         self._sdk._require({"id": id, "updateData": update_data})
