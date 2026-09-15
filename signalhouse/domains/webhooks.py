@@ -29,6 +29,9 @@ class Webhooks:
     ) -> dict[str, Any]:
         """Get a list of webhooks with optional filters.
 
+        Each returned endpoint carries `hasSigningSecret` (bool) instead of the signing secret
+        itself — see `create_webhook`.
+
         Args:
             id: Filter by webhook ID.
             group_id: Filter by associated group ID.
@@ -66,13 +69,17 @@ class Webhooks:
     ) -> dict[str, Any]:
         """Create a new webhook with the specified data.
 
+        The response includes a `signingSecret` (plaintext HMAC-SHA256 secret) used to sign every
+        delivery to this endpoint via the `X-SignalHouse-Signature` header. It is returned exactly
+        once, here — store it now, it is never exposed again by any read.
+
         Args:
             webhook_data: The data for the new webhook, including endpoint URL and event types.
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
 
         Returns:
-            Standardized response dict.
+            Standardized response dict, including the plaintext `signingSecret` (this one time only).
 
         Raises:
             SignalHouseValidationError: If webhook_data is missing.
@@ -95,6 +102,9 @@ class Webhooks:
         headers: dict[str, str] | None = None,
     ) -> dict[str, Any]:
         """Update an existing webhook with the specified data.
+
+        Like every other read of a webhook, the response carries `hasSigningSecret` (bool), never
+        the signing secret itself — see `create_webhook`.
 
         Args:
             id: The ID of the webhook to update.

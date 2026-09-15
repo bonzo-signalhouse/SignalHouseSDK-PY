@@ -128,6 +128,23 @@ class Numbers:
 
         Returns:
             Standardized response dict.
+
+            Every record carries a `sentiment` object -- trailing 7-day and 30-day inbound reply sentiment,
+            refreshed periodically from analytics rather than computed per request: `{ sevenDay, thirtyDay,
+            updatedAt }`, each window being `{ score, label, scoredCount, positive, neutral, negative }`. The
+            object is always present and fully populated, so it can be read without a presence check.
+            `score` is a volume-weighted average in -100..100 and is null when nothing was scored in the
+            window, which is not the same as a score of 0 -- null means nobody replied, 0 means replies
+            averaged neutral. `updatedAt` is null until the first rollup writes the record, and it tracks when
+            the figures last CHANGED, not when the job last ran.
+
+            Every record also carries a `health` object -- trailing 7-day and 30-day delivery/opt-out health from
+            the same periodic refresh: `{ sevenDay, thirtyDay, updatedAt }`, each window being `{ score,
+            deliveryRate, optOutRate, deliveryScore, optOutScore, messagesSent, messagesDelivered, messagesFailed,
+            optOuts }`. `score` is 1.0..10.0 (the mean of the two bucket scores) and is null when nothing was sent
+            in the window; the volumes say how much traffic sits behind it. A campaign's figure is scored from the
+            campaign's own summed counters, never averaged from its numbers. For a live figure use GET /number/health
+            or GET /campaign/health.
         """
         query_string = self._sdk._get_query_string({
             "phoneNumber": phone_number,
@@ -185,6 +202,7 @@ class Numbers:
         voice_enabled: bool | None = None,
         country: str | None = None,
         state: str | None = None,
+        city: str | None = None,
         npa: str | None = None,
         nxx: str | None = None,
         phone_number: str | None = None,
@@ -201,6 +219,7 @@ class Numbers:
             voice_enabled: Filter for voice enabled numbers.
             country: Filter by country code (e.g., "US").
             state: Filter by state code (e.g., "CA").
+            city: City prefix; requires country US/CA and state/province.
             npa: Filter by NPA (area code).
             nxx: Filter by NXX (central office code).
             phone_number: Filter by phone number.
@@ -218,6 +237,7 @@ class Numbers:
             "voiceEnabled": voice_enabled,
             "country": country,
             "state": state,
+            "city": city,
             "npa": npa,
             "nxx": nxx,
             "phoneNumber": phone_number,
@@ -236,6 +256,7 @@ class Numbers:
         phone_numbers: list[str],
         subgroup_id: str,
         *,
+        country: str = "US",
         token: str | None = None,
         headers: dict[str, str] | None = None,
     ) -> dict[str, Any]:
@@ -248,6 +269,7 @@ class Numbers:
         Args:
             phone_numbers: The list of phone numbers to purchase.
             subgroup_id: The ID of the subgroup to assign the purchased numbers to.
+            country: US (default) or CA. Canadian long codes are Ready on purchase.
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
 
@@ -261,7 +283,7 @@ class Numbers:
         return self._sdk._request(
             "/number",
             method="POST",
-            body={"phoneNumbers": phone_numbers, "subgroupId": subgroup_id},
+            body={"phoneNumbers": phone_numbers, "subgroupId": subgroup_id, "country": country},
             token=token,
             headers=headers,
         )
@@ -271,6 +293,7 @@ class Numbers:
         quantity: int,
         subgroup_id: str,
         *,
+        country: str = "US",
         token: str | None = None,
         headers: dict[str, str] | None = None,
     ) -> dict[str, Any]:
@@ -283,6 +306,8 @@ class Numbers:
         Args:
             quantity: The number of Toll-Free numbers to purchase (1-10).
             subgroup_id: The subgroup the purchased numbers are assigned to.
+            country: US (default) or CA. Both use the shared Toll Free registry;
+                sending requires an approved brand and campaign.
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
 
@@ -296,7 +321,7 @@ class Numbers:
         return self._sdk._request(
             "/number/toll-free",
             method="POST",
-            body={"quantity": quantity, "subgroupId": subgroup_id},
+            body={"quantity": quantity, "subgroupId": subgroup_id, "country": country},
             token=token,
             headers=headers,
         )
@@ -308,7 +333,6 @@ class Numbers:
         campaign_id: str,
         request_type: str,
         *,
-        existing_phone_number: str | None = None,
         lease_term_months: int | None = None,
         requested_vanity_code: str | None = None,
         actual_code: str | None = None,
@@ -320,8 +344,9 @@ class Numbers:
     ) -> dict[str, Any]:
         """Request a campaign-bound Short Code acquisition or register a customer-owned Registry lease.
 
-        INVENTORY soft-holds an existing unassigned Short Code. RANDOM and VANITY requests are fulfilled by Signal
-        House staff. EXTERNAL_LEASE creates a pending Short Code number immediately; it becomes READY only when its campaign becomes ACTIVE.
+        RANDOM and VANITY requests are fulfilled by Signal House staff. EXTERNAL_LEASE creates a pending
+        Short Code number immediately; it becomes READY only when its campaign becomes ACTIVE. A YYYY-MM-DD
+        ``lease_end_date`` expires at 23:59:59 UTC.
         An EXTERNAL_LEASE request requires ``lease_receipt_file``, a PNG, JPEG, or PDF file-like object or
         ``(filename, file_object, content_type)`` tuple.
         """
@@ -331,7 +356,6 @@ class Numbers:
             "brandId": brand_id,
             "campaignId": campaign_id,
             "requestType": request_type,
-            "existingPhoneNumber": existing_phone_number,
             "leaseTermMonths": lease_term_months,
             "requestedVanityCode": requested_vanity_code,
             "actualCode": actual_code,
@@ -743,14 +767,14 @@ class Numbers:
         """Search NPA/NXX lookup data with optional filters.
 
         At least one search parameter is required.
-        Location filters (country, state, city) cannot be combined with NPA/NXX filters.
+        Country may scope NPA/NXX filters; state and city cannot be combined with them.
 
         Args:
             country: Filter by country code.
             state: Filter by state code (2 characters).
             city: Filter by city name (prefix match, case-insensitive; requires country and state).
-            npa: Area code filter (1-3 digits; cannot combine with location filters).
-            nxx: Central office code filter (1-3 digits; cannot combine with location filters).
+            npa: Area code filter (1-3 digits; optional country, no state/city).
+            nxx: Central office code filter (1-3 digits; optional country, no state/city).
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
 

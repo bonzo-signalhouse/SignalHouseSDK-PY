@@ -90,15 +90,15 @@ class CampaignsAdmin:
         """Transition a Short Code campaign's review status (SHGHL-2225).
 
         A customer-visible reason is required for both rejection states ("REJECTED" = Signal
-        House Rejected, "DCA_REJECTED" = Rejected). Fulfillment and carrier submission are
-        dedicated staff operations.
+        House Rejected, "DCA_REJECTED" = Rejected). Selecting "PENDING_DCA_APPROVAL" runs
+        the guarded carrier-review transition; fulfillment remains a dedicated staff operation.
 
         Args:
             campaign_id: The ID of the campaign to transition.
-            status: The target status: "PENDING_REVIEW", "REJECTED", "PENDING_CREATION",
-                "DCA_REJECTED", or "ACTIVE". Use submit_short_code_campaign_to_carrier
-                for "PENDING_DCA_APPROVAL".
-            rejection_reason: Required for "REJECTED"/"DCA_REJECTED" (10-1024 characters).
+            status: The target status: "PENDING_REVIEW", "REJECTED", "PENDING_DCA_APPROVAL",
+                "DCA_REJECTED", or "ACTIVE". PENDING_DCA_APPROVAL
+                requires a Signal House-approved brand, issued code, and captured opt-in proof.
+            rejection_reason: Required and nonblank for "REJECTED"/"DCA_REJECTED" (max 1024 characters).
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
 
@@ -119,13 +119,13 @@ class CampaignsAdmin:
         )
 
     def fulfill_short_code_campaign(
-        self, campaign_id: str, actual_code: str, *, internal_notes: str | None = None,
+        self, campaign_id: str, actual_code: str, *, lease_end_date: str, internal_notes: str | None = None,
         token: str | None = None, headers: dict[str, str] | None = None,
     ) -> dict[str, Any]:
-        """Record the issued code for a campaign-bound Signal House Short Code request."""
-        self._sdk._require({"campaignId": campaign_id, "actualCode": actual_code})
+        """Record the issued code for a campaign-bound Signal House Short Code request. A YYYY-MM-DD lease date expires at 23:59:59 UTC."""
+        self._sdk._require({"campaignId": campaign_id, "actualCode": actual_code, "leaseEndDate": lease_end_date})
         safe_campaign_id = quote(str(campaign_id), safe="")
-        return self._sdk._request(f"/campaign/short-code/{safe_campaign_id}/fulfill", method="POST", body={"actualCode": actual_code, "internalNotes": internal_notes}, token=token, headers=headers)
+        return self._sdk._request(f"/campaign/short-code/{safe_campaign_id}/fulfill", method="POST", body={"actualCode": actual_code, "leaseEndDate": lease_end_date, "internalNotes": internal_notes}, token=token, headers=headers)
 
     def submit_short_code_campaign_to_carrier(
         self, campaign_id: str, *, token: str | None = None, headers: dict[str, str] | None = None,
@@ -134,6 +134,35 @@ class CampaignsAdmin:
         self._sdk._require({"campaignId": campaign_id})
         safe_campaign_id = quote(str(campaign_id), safe="")
         return self._sdk._request(f"/campaign/short-code/{safe_campaign_id}/submit-to-carrier", method="POST", token=token, headers=headers)
+
+    def complete_short_code_cancellation(
+        self, campaign_id: str, request_id: str, *, note: str | None = None,
+        token: str | None = None, headers: dict[str, str] | None = None,
+    ) -> dict[str, Any]:
+        """Confirm Registry offboarding and complete a pending Short Code cancellation."""
+        self._sdk._require({"campaignId": campaign_id, "requestId": request_id})
+        safe_campaign_id = quote(str(campaign_id), safe="")
+        return self._sdk._request(f"/campaign/short-code/{safe_campaign_id}/cancellation/complete", method="POST", body={"requestId": request_id, "note": note}, token=token, headers=headers)
+
+    def dismiss_short_code_cancellation(
+        self, campaign_id: str, request_id: str, *, note: str | None = None,
+        token: str | None = None, headers: dict[str, str] | None = None,
+    ) -> dict[str, Any]:
+        """Dismiss a pending Short Code cancellation and restore its prior lifecycle state."""
+        self._sdk._require({"campaignId": campaign_id, "requestId": request_id})
+        safe_campaign_id = quote(str(campaign_id), safe="")
+        return self._sdk._request(f"/campaign/short-code/{safe_campaign_id}/cancellation/dismiss", method="POST", body={"requestId": request_id, "note": note}, token=token, headers=headers)
+
+    def get_expired_short_code_leases(self, *, page: int | None = None, limit: int | None = None, token: str | None = None, headers: dict[str, str] | None = None) -> dict[str, Any]:
+        """Read staff-only expired Short Code leases awaiting Registry offboarding."""
+        query = self._sdk._get_query_string({"page": page, "limit": limit})
+        return self._sdk._request(f"/campaign/short-code/expired-leases{query}", method="GET", token=token, headers=headers)
+
+    def release_expired_short_code_lease(self, campaign_id: str, *, note: str | None = None, token: str | None = None, headers: dict[str, str] | None = None) -> dict[str, Any]:
+        """Confirm Registry offboarding and mark an expired Short Code released."""
+        self._sdk._require({"campaignId": campaign_id})
+        safe_campaign_id = quote(str(campaign_id), safe="")
+        return self._sdk._request(f"/campaign/short-code/{safe_campaign_id}/expired-lease/release", method="POST", body={"note": note}, token=token, headers=headers)
 
 
 class Campaigns:
@@ -169,12 +198,29 @@ class Campaigns:
             page: The page number for pagination.
             limit: The number of items per page.
             status: The status of the campaign to filter by.
-            registration_type: Optional registration-type filter ("TEN_DLC" or "TOLL_FREE").
+            registration_type: Optional registration-type filter ("TEN_DLC", "TOLL_FREE", or "SHORT_CODE").
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
 
         Returns:
             Standardized response dict.
+
+            Every record carries a `sentiment` object -- trailing 7-day and 30-day inbound reply sentiment,
+            refreshed periodically from analytics rather than computed per request: `{ sevenDay, thirtyDay,
+            updatedAt }`, each window being `{ score, label, scoredCount, positive, neutral, negative }`. The
+            object is always present and fully populated, so it can be read without a presence check.
+            `score` is a volume-weighted average in -100..100 and is null when nothing was scored in the
+            window, which is not the same as a score of 0 -- null means nobody replied, 0 means replies
+            averaged neutral. `updatedAt` is null until the first rollup writes the record, and it tracks when
+            the figures last CHANGED, not when the job last ran.
+
+            Every record also carries a `health` object -- trailing 7-day and 30-day delivery/opt-out health from
+            the same periodic refresh: `{ sevenDay, thirtyDay, updatedAt }`, each window being `{ score,
+            deliveryRate, optOutRate, deliveryScore, optOutScore, messagesSent, messagesDelivered, messagesFailed,
+            optOuts }`. `score` is 1.0..10.0 (the mean of the two bucket scores) and is null when nothing was sent
+            in the window; the volumes say how much traffic sits behind it. A campaign's figure is scored from the
+            campaign's own summed counters, never averaged from its numbers. For a live figure use GET /number/health
+            or GET /campaign/health.
         """
         query_string = self._sdk._get_query_string({
             "id": id,
@@ -266,7 +312,7 @@ class Campaigns:
 
         registrationType is forced to TOLL_FREE server-side; TFN-specific fields live under
         ``campaign_data["tollFree"]`` (useCase, messageVolume, programSummary, exampleMessage,
-        customerCareEmail, optInImageURLs, optional optIns / multiNumberReason).
+        customerCareEmail, optInImageURLs, optional optIns / multiNumberReason / useCases / channels / landingId).
 
         Args:
             campaign_data: The data for the toll-free campaign to be created (see API docs for
@@ -299,18 +345,19 @@ class Campaigns:
     ) -> dict[str, Any]:
         """Create a new Short Code campaign and submit it for Signal House review (SHGHL-2225).
 
-        Requires an approved (VERIFIED) Short Code brand. ``campaign_data["shortCode"]["optInUrl"]``
-        is optional; Signal House uses the brand's ``optInLink`` when it is omitted, then captures its
-        screenshot asynchronously and retries up to three times. Request or register the campaign's
+        Requires an approved (VERIFIED) Short Code brand. Upload the opt-in proof screenshot first with
+        ``upload_opt_in_image`` and pass the returned URL as
+        ``campaign_data["shortCode"]["screenshotUrl"]`` (required; external URLs are rejected).
+        ``optInUrl`` (required) is the public HTTPS link to the live opt-in experience. Request or register the campaign's
         Short Code separately through ``numbers.request_short_code_acquisition`` after creation.
 
         Args:
             campaign_data: The Short Code campaign data. Top-level fields: brandId,
                 privacyPolicyLink, termsAndConditionsLink, optinMessage, optoutMessage,
-                helpMessage, sample1-3, autoRenewal, tag, and a ``shortCode`` sub-object
+                helpMessage, sample1-3, tag, and a ``shortCode`` sub-object
                 (useCases, optInMethods, optInMethodDescriptions, messageFrequency,
                 pricingTier, adultContent, doubleOptInMessage, programSummary,
-                optInConfirmationMessage, optInUrl).
+                optInConfirmationMessage, screenshotUrl, optInUrl).
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
 
@@ -375,11 +422,9 @@ class Campaigns:
     ) -> dict[str, Any]:
         """Cancel a Short Code campaign (SHGHL-2225).
 
-        Customers may cancel only while the campaign is in Signal House Review or Signal House
-        Rejected status; Signal House staff may cancel from any non-terminal status. Persists as
-        "EXPIRED" (displayed as "Cancelled"). A real Registry lease (external or an
-        already-fulfilled Signal House request) is never auto-released — see SHGHL-2228 for
-        offboarding.
+        Customer cancellation of an issued Short Code returns ``PENDING_DELETE`` (Cancellation Pending)
+        until Signal House confirms Registry offboarding. Unissued RANDOM/VANITY requests, plus
+        staff-confirmed cancellations, return ``EXPIRED`` immediately.
 
         Args:
             campaign_id: The ID of the campaign to cancel.
@@ -469,6 +514,7 @@ class Campaigns:
         self,
         brand_id: str,
         *,
+        landing_id: str | None = None,
         token: str | None = None,
         headers: dict[str, str] | None = None,
     ) -> dict[str, Any]:
@@ -479,6 +525,7 @@ class Campaigns:
 
         Args:
             brand_id: The ID of the brand whose generated landing page should be captured.
+            landing_id: The specific page to capture. Required for Toll-Free brands, which have one page per campaign — omitted, the request is refused rather than guessing. A 10DLC brand has a single page, so it may be omitted there.
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
 
@@ -489,10 +536,13 @@ class Campaigns:
             SignalHouseValidationError: If brand_id is missing.
         """
         self._sdk._require({"brandId": brand_id})
+        body: dict[str, Any] = {"brandId": brand_id}
+        if landing_id is not None:
+            body["landingId"] = landing_id
         return self._sdk._request(
             "/campaign/opt-in-image/from-landing",
             method="POST",
-            body={"brandId": brand_id},
+            body=body,
             token=token,
             headers=headers,
         )
@@ -512,7 +562,7 @@ class Campaigns:
             campaign_data: The data for the campaign to be updated. For a Toll-Free campaign, pass
                            the editable Toll-Free fields under a ``tollFree`` sub-object (useCase,
                            messageVolume, programSummary, exampleMessage, customerCareEmail,
-                           optInImageURLs, optIns, multiNumberReason); phoneNumbers cannot be
+                           optInImageURLs, optIns, multiNumberReason, useCases, channels, landingId); phoneNumbers cannot be
                            changed — Toll-Free numbers are locked to their campaign.
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.

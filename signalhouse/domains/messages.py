@@ -20,6 +20,10 @@ class Messages:
     def __init__(self, sdk: SignalHouseSDK) -> None:
         self._sdk = sdk
 
+    def estimate_message(self, sender_phone_number: str, recipient_phone_numbers: list[str], message_body: str, *, message_type: str = "SMS", token: str | None = None, headers: dict[str, str] | None = None) -> dict[str, Any]:
+        """Estimate Canadian SMS/MMS using cached carriers. Rates and totals are microdollars; no charge or send."""
+        return self._sdk._request("/message/estimate", method="POST", body={"senderPhoneNumber": sender_phone_number, "recipientPhoneNumbers": recipient_phone_numbers, "messageBody": message_body, "messageType": message_type}, token=token, headers=headers)
+
     def get_messages(
         self,
         *,
@@ -35,6 +39,7 @@ class Messages:
         direction: str | None = None,
         message_type: str | list[str] | None = None,
         carrier: str | None = None,
+        sentiment_label: str | list[str] | None = None,
         start_date: str | None = None,
         end_date: str | None = None,
         sort_field: str | None = None,
@@ -56,14 +61,17 @@ class Messages:
             status: Filter by status (ENQUEUED, DEQUEUED, SENT, FAILED, DELIVERED).
             direction: Filter by direction (INBOUND, OUTBOUND).
             message_type: Filter by type (SMS, MMS).
-            channel: Filter by channel — "tenDLC", "tollFree", "shortCode", or "p2p" (single value or list).
+            channel: Filter by channel — "tenDLC", "virtualLongCode", "tollFree", "shortCode", or "p2p" (single value or list).
                 Filters on each message's stored channel; older messages without one count as tenDLC.
             carrier: Filter by carrier used for sending.
+            sentiment_label: Filter by sentiment bucket — "positive", "neutral", or "negative"
+                (single value or list). Applied as the sentimentScore range the ±25 label threshold
+                produces, so unscored messages match no bucket and outbound messages are excluded.
             sender_phone_number: Filter by sender phone number.
             recipient_phone_number: Filter by recipient phone number.
             start_date: ISO-8601 date or timestamp; normalized to start-of-UTC-day (inclusive).
             end_date: ISO-8601 date or timestamp; normalized to end-of-UTC-day (inclusive). Hourly resolution is not supported.
-            sort_field: The field to sort by.
+            sort_field: The field to sort by (createdAt, segmentCount, status, sentimentScore).
             sort_order: The sort order (asc, desc).
             page: The page number for pagination.
             limit: The number of messages per page.
@@ -71,7 +79,9 @@ class Messages:
             headers: Additional headers to include in the request.
 
         Returns:
-            Standardized response dict.
+            Standardized response dict. Inbound messages also carry sentimentScore (-100..100, None
+            when unscored), sentimentLabel ("positive"/"neutral"/"negative", None when sentimentScore
+            is None) and sentimentScoredAt. Outbound messages are never scored.
         """
         query_string = self._sdk._get_query_string({
             "id": id,
@@ -87,6 +97,7 @@ class Messages:
             "messageType": message_type,
             "channel": channel,
             "carrier": carrier,
+            "sentimentLabel": sentiment_label,
             "startDate": start_date,
             "endDate": end_date,
             "sortField": sort_field,
@@ -110,9 +121,11 @@ class Messages:
         campaign_id: str | None = None,
         phone_number: str | None = None,
         carrier: str | None = None,
+        carrier_family: str | list[str] | None = None,
         start_date: str | None = None,
         end_date: str | None = None,
         channel: str | list[str] | None = None,
+        message_type: str | list[str] | None = None,
         token: str | None = None,
         headers: dict[str, str] | None = None,
     ) -> dict[str, Any]:
@@ -125,16 +138,24 @@ class Messages:
             campaign_id: Filter analytics by campaign ID.
             phone_number: Filter analytics by phone number.
             carrier: Filter analytics by carrier.
+            carrier_family: Filter analytics by the recipient's resolved carrier family (Default, ATT, TMobile, Verizon, USCellular, GoogleVoice, ClearSky, Interop, RogueMobile, P2P);
+                single value or list. Only accepted where the environment serves hourly analytics; elsewhere any value is rejected with a 400 -- omit the parameter unless it is wanted.
             start_date: ISO-8601 date or timestamp; normalized to start-of-UTC-day (inclusive).
             end_date: ISO-8601 date or timestamp; normalized to end-of-UTC-day (inclusive). Hourly resolution is not supported.
-            channel: Filter by channel — "tenDLC", "tollFree", "shortCode", or "p2p" (single value or list).
+            channel: Filter by channel — "tenDLC", "virtualLongCode", "tollFree", "shortCode", or "p2p" (single value or list).
                 Filters on the stored channel; a tenDLC selection also includes older messages with
                 no channel, and p2p is matched by carrier.
+            message_type: Message type(s) the SENTIMENT figures are scoped to: SMS, MMS or P2P. Omit for all scored types. Does NOT narrow the message counts, which are always returned split per type and have no filterable type dimension.
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
 
         Returns:
-            Standardized response dict.
+            Standardized response dict. Also includes inbound-message sentiment for the requested
+            scope: sentimentScore (volume-weighted average of every scored inbound message in range,
+            -100..100, None when nothing was scored), sentimentLabel ("positive"/"neutral"/"negative",
+            None when sentimentScore is None), sentimentScoredCount, sentimentPositive,
+            sentimentNeutral, sentimentNegative. sentimentScore is an average, so it must never be
+            summed across responses — request one range instead.
         """
         query_string = self._sdk._get_query_string({
             "groupId": group_id,
@@ -143,9 +164,11 @@ class Messages:
             "campaignId": campaign_id,
             "phoneNumber": phone_number,
             "carrier": carrier,
+            "carrierFamily": carrier_family,
             "startDate": start_date,
             "endDate": end_date,
             "channel": channel,
+            "messageType": message_type,
         })
         return self._sdk._request(
             f"/message/analytics{query_string}",
@@ -163,9 +186,13 @@ class Messages:
         campaign_id: str | None = None,
         phone_number: str | None = None,
         carrier: str | None = None,
+        carrier_family: str | list[str] | None = None,
         start_date: str | None = None,
         end_date: str | None = None,
         channel: str | list[str] | None = None,
+        message_type: str | list[str] | None = None,
+        granularity: str | None = None,
+        breakdown: str | None = None,
         token: str | None = None,
         headers: dict[str, str] | None = None,
     ) -> dict[str, Any]:
@@ -178,16 +205,33 @@ class Messages:
             campaign_id: Filter analytics by campaign ID.
             phone_number: Filter analytics by phone number.
             carrier: Filter analytics by carrier.
-            start_date: ISO-8601 date or timestamp; normalized to start-of-UTC-day (inclusive).
-            end_date: ISO-8601 date or timestamp; normalized to end-of-UTC-day (inclusive). Hourly resolution is not supported.
-            channel: Filter by channel — "tenDLC", "tollFree", "shortCode", or "p2p" (single value or list).
+            carrier_family: Filter analytics by the recipient's resolved carrier family (Default, ATT, TMobile, Verizon, USCellular, GoogleVoice, ClearSky, Interop, RogueMobile, P2P);
+                single value or list. Only accepted where the environment serves hourly analytics; elsewhere any value is rejected with a 400 -- omit the parameter unless it is wanted.
+            start_date: ISO-8601 date or timestamp. At day granularity it is normalized to start-of-UTC-day (inclusive); at hour granularity it is floored to its hour.
+            end_date: ISO-8601 date or timestamp. At day granularity it is normalized to end-of-UTC-day (inclusive); at hour granularity it is honoured as given.
+            channel: Filter by channel — "tenDLC", "virtualLongCode", "tollFree", "shortCode", or "p2p" (single value or list).
                 Filters on the stored channel; a tenDLC selection also includes older messages with
                 no channel, and p2p is a real channel here.
+            message_type: Message type(s) the SENTIMENT figures are scoped to: SMS, MMS or P2P. Omit for all scored types. Does NOT narrow the message counts, which are always returned split per type and have no filterable type dimension.
+            granularity: Time-bucket grain of the byDate rows: "day" or "hour". Omit for day (each row's
+                _id is a "YYYY-MM-DD" date). "hour" buckets by hour (each row's _id is a
+                "YYYY-MM-DD HH:MM:SS" UTC hour) and is capped to a 7-day span. Only accepted where the
+                environment serves hourly analytics; elsewhere any value, including "day", is rejected
+                with a 400 -- omit the parameter unless hour grain is wanted.
+            breakdown: "carrier" or "carrierFamily". Adds a byBreakdown time × dimension series to the
+                response ({dimension, rows}: each row is one byDate bucket (_id) for one carrier or
+                carrier family (key), top 50 keys by volume, 10DLC only) and caps the span at 31 days.
+                Only accepted where the environment serves hourly analytics; elsewhere any value is rejected with a 400 -- omit the parameter unless it is wanted.
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
 
         Returns:
-            Standardized response dict with array of analytics snapshot records.
+            Standardized response dict with array of analytics snapshot records. cardTotals and every
+            byDate/byPhoneNumber/byCarrier row also carry that row's own inbound-message sentiment:
+            sentimentScore (volume-weighted average, -100..100, None when nothing in that row's scope
+            was scored), sentimentLabel, sentimentScoredCount, sentimentPositive, sentimentNeutral,
+            sentimentNegative. The fields are always present; sentimentScore is an average and must
+            never be summed across rows or responses.
         """
         query_string = self._sdk._get_query_string({
             "groupId": group_id,
@@ -196,9 +240,13 @@ class Messages:
             "campaignId": campaign_id,
             "phoneNumber": phone_number,
             "carrier": carrier,
+            "carrierFamily": carrier_family,
             "startDate": start_date,
             "endDate": end_date,
             "channel": channel,
+            "messageType": message_type,
+            "granularity": granularity,
+            "breakdown": breakdown,
         })
         return self._sdk._request(
             f"/message/analytics/detail{query_string}",
@@ -245,11 +293,13 @@ class Messages:
         campaign_id: str | list[str] | None = None,
         phone_number: str | list[str] | None = None,
         carrier: str | list[str] | None = None,
+        carrier_family: str | list[str] | None = None,
         start_date: str | None = None,
         end_date: str | None = None,
         page: int | None = None,
         limit: int | None = None,
         channel: str | list[str] | None = None,
+        message_type: str | list[str] | None = None,
         token: str | None = None,
         headers: dict[str, str] | None = None,
     ) -> dict[str, Any]:
@@ -259,15 +309,28 @@ class Messages:
         callers can apply channel toggles client-side.
 
         Args:
+            carrier_family: Filter analytics by the recipient's resolved carrier family (Default, ATT, TMobile, Verizon, USCellular, GoogleVoice, ClearSky, Interop, RogueMobile, P2P);
+                single value or list. Only accepted where the environment serves hourly analytics; elsewhere any value is rejected with a 400 -- omit the parameter unless it is wanted.
             page: Page number (default 1).
             limit: Rows per page, max 50.
-            channel: "both" (default, all activity) or "tenDLC" / "tollFree" / "shortCode" / "p2p" (single value
+            channel: "both" (default, all activity) or "tenDLC" / "virtualLongCode" / "tollFree" / "shortCode" / "p2p" (single value
                 or list). Scopes the ORDER BY + row inclusion by the stored channel column so a
                 single-channel caller doesn't get pages dominated by other channels; toll-free is
                 kept separate from 10DLC.
+            message_type: Message type(s) the SENTIMENT figures are scoped to: SMS, MMS or P2P
+                (single value or list). Omit for all scored types. Does NOT narrow the message
+                counts, which are always returned split per type and have no filterable type
+                dimension.
 
         Returns:
-            Standardized response dict with rows, totalCount, page, and limit.
+            Standardized response dict with rows, totalCount, page, and limit. Each row carries that
+            subgroup's inbound-message sentiment alongside its message counters: sentimentScore
+            (volume-weighted average of every scored inbound message in that subgroup, -100..100,
+            None when nothing was scored), sentimentLabel, sentimentScoredCount, sentimentPositive,
+            sentimentNeutral, sentimentNegative, plus the same six per message type under
+            smsSentiment*, mmsSentiment* and p2pSentiment* prefixes. The score is derived
+            server-side and must never be re-averaged across rows — combine the counts, not the
+            scores.
         """
         query_string = self._sdk._get_query_string({
             "groupId": group_id,
@@ -276,11 +339,13 @@ class Messages:
             "campaignId": campaign_id,
             "phoneNumber": phone_number,
             "carrier": carrier,
+            "carrierFamily": carrier_family,
             "startDate": start_date,
             "endDate": end_date,
             "page": page,
             "limit": limit,
             "channel": channel,
+            "messageType": message_type,
         })
         return self._sdk._request(
             f"/message/analytics/by-subgroup{query_string}",
@@ -298,6 +363,7 @@ class Messages:
         campaign_id: str | list[str] | None = None,
         phone_number: str | list[str] | None = None,
         carrier: str | list[str] | None = None,
+        carrier_family: str | list[str] | None = None,
         start_date: str | None = None,
         end_date: str | None = None,
         page: int | None = None,
@@ -310,9 +376,11 @@ class Messages:
         contains per-channel (sms/mms/p2p) error counts plus an enriched description.
 
         Args:
+            carrier_family: Filter analytics by the recipient's resolved carrier family (Default, ATT, TMobile, Verizon, USCellular, GoogleVoice, ClearSky, Interop, RogueMobile, P2P);
+                single value or list. Only accepted where the environment serves hourly analytics; elsewhere any value is rejected with a 400 -- omit the parameter unless it is wanted.
             page: Page number (default 1).
             limit: Rows per page, max 50.
-            channel: "both" (default, every code) or "tenDLC" / "tollFree" / "shortCode" / "p2p" (single value
+            channel: "both" (default, every code) or "tenDLC" / "virtualLongCode" / "tollFree" / "shortCode" / "p2p" (single value
                 or list). Scopes the ORDER BY + totalCount by the stored channel column; when one
                 channel is selected, totalErrors reflects only that channel.
 
@@ -326,6 +394,7 @@ class Messages:
             "campaignId": campaign_id,
             "phoneNumber": phone_number,
             "carrier": carrier,
+            "carrierFamily": carrier_family,
             "startDate": start_date,
             "endDate": end_date,
             "page": page,
@@ -365,14 +434,19 @@ class Messages:
             carrier: Filter by carrier.
             start_date: ISO-8601 date or timestamp; normalized to start-of-UTC-day (inclusive).
             end_date: ISO-8601 date or timestamp; normalized to end-of-UTC-day (inclusive). Hourly resolution is not supported.
-            channel: Filter by channel — "tenDLC", "tollFree", or "shortCode" (single value or list). Opt-outs are
+            channel: Filter by channel — "tenDLC", "virtualLongCode", "tollFree", or "shortCode" (single value or list). Opt-outs are
                 A2P-only, so "p2p" applies no filter. A tenDLC selection also includes older opt-outs
                 with no channel.
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
 
         Returns:
-            Standardized response dict with totals, byDate, byPhoneNumber, byCarrier.
+            Standardized response dict with totals, byDate, byPhoneNumber, byCarrier, byKeyword.
+            byKeyword breaks opt-outs down by the normalized keyword that revoked consent
+            ({optOutKeyword, total, sms, mms}); opt-outs recorded before keyword capture shipped
+            appear as a single ``optOutKeyword: None`` bucket ("not recorded"). The distinct keyword
+            set is open-ended (campaigns register their own keywords beyond the mandatory floor) —
+            render top-N plus Other, never a fixed list.
         """
         query_string = self._sdk._get_query_string({
             "groupId": group_id,
@@ -426,14 +500,20 @@ class Messages:
             limit: Number of records per page.
             sort_field: Field to sort by.
             sort_order: Sort direction (asc, desc).
-            channel: Filter by channel — "tenDLC", "tollFree", or "shortCode" (single value or list). Opt-outs are
+            channel: Filter by channel — "tenDLC", "virtualLongCode", "tollFree", or "shortCode" (single value or list). Opt-outs are
                 A2P-only, so "p2p" applies no filter. A tenDLC selection also includes older opt-outs
                 with no channel.
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
 
         Returns:
-            Standardized response dict with paginated DNC records.
+            Standardized response dict with paginated DNC records. Each record carries
+            ``optOutKeyword`` — the normalized keyword that revoked consent (e.g. "stop",
+            "opt out"; a repeat opt-out records the most recent word), ``None`` for opt-outs
+            recorded before keyword capture shipped — and ``carrierFamily``, the resolved carrier
+            family of the recipient number (Default, ATT, TMobile, Verizon, USCellular,
+            GoogleVoice, ClearSky, Interop, RogueMobile), copied from the inbound message that
+            triggered the opt-out.
         """
         query_string = self._sdk._get_query_string({
             "groupId": group_id,
@@ -475,8 +555,10 @@ class Messages:
             sender_phone_number: The digits-only 5-6 digit Short Code or 10+ digit
                 long number to send the message from.
             recipient_phone_numbers: The 10+ digit phone number(s) to send the
-                message to. A Short Code sender permits exactly one recipient;
-                the API rejects Short Code sends with multiple recipients.
+                message to. A Short Code sender permits exactly one recipient,
+                and it must be a +1 (US/Canada) number; a bare 10-digit number
+                is treated as +1. The API rejects Short Code sends with multiple
+                recipients or a non-+1 recipient.
             message_body: The body of the SMS message.
             status_callback_url: The URL to receive status callbacks.
             enable_shortlink: Whether to enable shortlink in the message.
@@ -673,8 +755,10 @@ class Messages:
             sender_phone_number: The digits-only 5-6 digit Short Code or 10+ digit
                 long number to send the message from.
             recipient_phone_numbers: The 10+ digit phone number(s) to send the
-                message to. A Short Code sender permits exactly one recipient;
-                the API rejects Short Code sends with multiple recipients.
+                message to. A Short Code sender permits exactly one recipient,
+                and it must be a +1 (US/Canada) number; a bare 10-digit number
+                is treated as +1. The API rejects Short Code sends with multiple
+                recipients or a non-+1 recipient.
             message_body: The body of the MMS message.
             media_urls: The URLs of the media attachments.
             status_callback_url: The URL to receive status callbacks.

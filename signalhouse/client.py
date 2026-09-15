@@ -9,6 +9,7 @@ from urllib.parse import quote, urlencode
 import requests
 
 from .exceptions import SignalHouseValidationError
+from .domains.agents import Agents
 from .domains.auth import Auth
 from .domains.billing import Billing
 from .domains.brands import Brands
@@ -62,6 +63,7 @@ class SignalHouseSDK:
         })
 
         # API Domains
+        self.agents = Agents(self)
         self.auth = Auth(self)
         self.billing = Billing(self)
         self.brands = Brands(self)
