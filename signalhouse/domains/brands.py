@@ -247,6 +247,9 @@ class Brands:
     def create_external_vetting(
         self,
         brand_id: str,
+        vetting_provider_id: str,
+        vetting_class: str,
+        additional_data: dict[str, Any] | None = None,
         *,
         token: str | None = None,
         headers: dict[str, str] | None = None,
@@ -255,6 +258,10 @@ class Brands:
 
         Args:
             brand_id: Brand lookup id (carrier Brand ID, Mongo _id, or internal reference).
+            vetting_provider_id: The external vetting provider (AEGIS or WMC).
+            vetting_class: The vetting class (STANDARD, ENHANCED, AUTHPLUS, or RCS; AEGIS accepts all
+                four, WMC accepts STANDARD only).
+            additional_data: Provider-specific additional data forwarded to TCR.
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
 
@@ -262,13 +269,17 @@ class Brands:
             Standardized response dict.
 
         Raises:
-            SignalHouseValidationError: If brand_id is missing.
+            SignalHouseValidationError: If brand_id, vetting_provider_id, or vetting_class is missing.
         """
-        self._sdk._require({"brandId": brand_id})
+        self._sdk._require({"brandId": brand_id, "vettingProviderId": vetting_provider_id, "vettingClass": vetting_class})
         safe_brand_id = quote(str(brand_id), safe="")
+        body: dict[str, Any] = {"vettingProviderId": vetting_provider_id, "vettingClass": vetting_class}
+        if additional_data is not None:
+            body["additionalData"] = additional_data
         return self._sdk._request(
             f"/brand/externalvetting/{safe_brand_id}",
             method="POST",
+            body=body,
             token=token,
             headers=headers,
         )

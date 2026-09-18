@@ -4,4 +4,4 @@ from .client import SignalHouseSDK
 from .exceptions import SignalHouseError, SignalHouseValidationError
 
 __all__ = ["SignalHouseSDK", "SignalHouseError", "SignalHouseValidationError"]
-__version__ = "1.1.11"
+__version__ = "1.1.12"

@@ -20,10 +20,34 @@ class Agents:
     def __init__(self, sdk: SignalHouseSDK) -> None:
         self._sdk = sdk
 
+    def get_agent_voices(
+        self,
+        *,
+        token: str | None = None,
+        headers: dict[str, str] | None = None,
+    ) -> dict[str, Any]:
+        """List the voices an agent can be configured to speak with.
+
+        The catalog is platform-wide, not per-account, so this takes no scope.
+        `voiceId` is the value to set on a spoken channel's setting.
+
+        Allowed roles: api, admin, developer, billing, user.
+
+        Args:
+            token: Optional bearer token for authentication.
+            headers: Additional headers to include in the request.
+
+        Returns:
+            Standardized response dict whose data is a list of voices, each
+            {voiceId, name, description, previewUrl, gender, accent, age, useCase, language}.
+        """
+        return self._sdk._request("/agent/voices", method="GET", token=token, headers=headers)
+
     def get_agent_profiles(
         self,
         *,
         group_id: str,
+        subgroup_id: str | None = None,
         page: int | None = None,
         limit: int | None = None,
         token: str | None = None,
@@ -35,6 +59,7 @@ class Agents:
 
         Args:
             group_id: The group whose profiles to list (required).
+            subgroup_id: Narrow to the agents this subgroup can use — its own, plus the group-level agents shared with every subgroup.
             page: The page number for pagination.
             limit: The number of items per page.
             token: Optional bearer token for authentication.
@@ -49,6 +74,7 @@ class Agents:
         self._sdk._require({"groupId": group_id})
         query_string = self._sdk._get_query_string({
             "groupId": group_id,
+            "subgroupId": subgroup_id,
             "page": page,
             "limit": limit,
         })
@@ -106,9 +132,8 @@ class Agents:
                 groupId (str, starts with 'G') and name (str). Optional fields:
                 subgroupId (str, starts with 'S', null = group-level agent),
                 status ("active" | "inactive", defaults to "active"), systemPrompt,
-                greeting, guardrails, voiceId (str, nullable), llmProvider
-                ("bedrock" | "openai" | "anthropic" | "groq", defaults to "bedrock"),
-                llmModel (str, nullable), and temperature (number 0-2).
+                greeting, and guardrails. Model, voice and sampling settings are
+                per-channel and live on the channel setting, not here.
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
 
@@ -144,8 +169,8 @@ class Agents:
             update_data: The fields to update. All create fields are accepted except
                 groupId and subgroupId — the agent's scope is immutable. Updatable
                 fields: name, status ("active" | "inactive"), systemPrompt, greeting,
-                guardrails, voiceId (str, nullable), llmProvider ("bedrock" | "openai"
-                | "anthropic" | "groq"), llmModel (str, nullable), temperature (0-2).
+                and guardrails. Model, voice and sampling settings are per-channel and
+                live on the channel setting, not here.
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
 
@@ -253,6 +278,180 @@ class Agents:
             headers=headers,
         )
 
+    def start_conversation(
+        self,
+        *,
+        agent_profile_id: str,
+        channel: str,
+        contact_identifier: str | None = None,
+        call_id: str | None = None,
+        metadata: dict[str, Any] | None = None,
+        token: str | None = None,
+        headers: dict[str, str] | None = None,
+    ) -> dict[str, Any]:
+        """Start a conversation without sending a message.
+
+        The counterpart to send_agent_message for callers that run the model
+        themselves — a voice runtime, or your own LLM. Those record what was said;
+        send_agent_message decides it. Both write the same conversation records.
+
+        Allowed roles: api, admin, developer, billing, user.
+
+        Args:
+            agent_profile_id: The agent this conversation belongs to (required).
+            channel: The channel: "webchat", "sms", or "voice" (required).
+            contact_identifier: The far-end identifier (visitor id, caller number).
+            call_id: Telephony call id, for the voice channel.
+            metadata: Arbitrary metadata stored with the conversation.
+            token: Optional bearer token for authentication.
+            headers: Additional headers to include in the request.
+
+        Returns:
+            The created conversation, including conversationId and conversationSessionId.
+
+        Raises:
+            SignalHouseValidationError: If agent_profile_id or channel is missing.
+        """
+        self._sdk._require({"agentProfileId": agent_profile_id, "channel": channel})
+        body: dict[str, Any] = {"agentProfileId": agent_profile_id, "channel": channel}
+        if contact_identifier is not None:
+            body["contactIdentifier"] = contact_identifier
+        if call_id is not None:
+            body["callId"] = call_id
+        if metadata is not None:
+            body["metadata"] = metadata
+        return self._sdk._request("/agent/conversations", method="POST", body=body, token=token, headers=headers)
+
+    def get_conversation(
+        self,
+        *,
+        conversation_id: str,
+        page: int | None = None,
+        limit: int | None = None,
+        token: str | None = None,
+        headers: dict[str, str] | None = None,
+    ) -> dict[str, Any]:
+        """Read one conversation with a page of its messages, in order.
+
+        Paged rather than whole: a transcript has no natural ceiling. Omitting
+        limit gives 100 messages, not all of them.
+
+        Allowed roles: api, admin, developer, billing, user.
+
+        Args:
+            conversation_id: The conversation to read (required).
+            page: Page number; defaults to 1.
+            limit: Messages per page; defaults to 100, capped at 500.
+            token: Optional bearer token for authentication.
+            headers: Additional headers to include in the request.
+
+        Returns:
+            A one-element list with the conversation and its messages.
+
+        Raises:
+            SignalHouseValidationError: If conversation_id is missing.
+        """
+        self._sdk._require({"conversationId": conversation_id})
+        safe_id = quote(str(conversation_id), safe="")
+        query_string = self._sdk._get_query_string({"page": page, "limit": limit})
+        return self._sdk._request(f"/agent/conversations/{safe_id}{query_string}", method="GET", token=token, headers=headers)
+
+    def append_conversation_message(
+        self,
+        *,
+        conversation_id: str,
+        role: str,
+        content: str | None = None,
+        tool_calls: list[dict[str, Any]] | None = None,
+        tool_results: list[dict[str, Any]] | None = None,
+        ttfb_ms: int | None = None,
+        latency_ms: int | None = None,
+        barge_in_occurred: bool | None = None,
+        token: str | None = None,
+        headers: dict[str, str] | None = None,
+    ) -> dict[str, Any]:
+        """Append one message to a conversation.
+
+        Records a turn rather than generating one, so role is explicit — an assistant
+        turn your own runtime produced is the normal case here. content is optional so
+        a tool-only turn needs no prose.
+
+        Allowed roles: api, admin, developer, billing, user.
+
+        Args:
+            conversation_id: The conversation to append to (required).
+            role: "user", "assistant", "system", or "tool" (required).
+            content: What was said.
+            tool_calls: Tools invoked on this turn.
+            tool_results: Their results.
+            ttfb_ms: Time to first byte/audio, in milliseconds.
+            latency_ms: Total turn latency, in milliseconds.
+            barge_in_occurred: Whether the far end talked over this turn.
+            token: Optional bearer token for authentication.
+            headers: Additional headers to include in the request.
+
+        Returns:
+            The persisted message.
+
+        Raises:
+            SignalHouseValidationError: If conversation_id or role is missing.
+        """
+        self._sdk._require({"conversationId": conversation_id, "role": role})
+        safe_id = quote(str(conversation_id), safe="")
+        body: dict[str, Any] = {"role": role}
+        if content is not None:
+            body["content"] = content
+        if tool_calls is not None:
+            body["toolCalls"] = tool_calls
+        if tool_results is not None:
+            body["toolResults"] = tool_results
+        if ttfb_ms is not None:
+            body["ttfbMs"] = ttfb_ms
+        if latency_ms is not None:
+            body["latencyMs"] = latency_ms
+        if barge_in_occurred is not None:
+            body["bargeInOccurred"] = barge_in_occurred
+        return self._sdk._request(f"/agent/conversations/{safe_id}/messages", method="POST", body=body, token=token, headers=headers)
+
+    def end_conversation(
+        self,
+        *,
+        conversation_id: str,
+        status: str | None = None,
+        metadata: dict[str, Any] | None = None,
+        token: str | None = None,
+        headers: dict[str, str] | None = None,
+    ) -> dict[str, Any]:
+        """End a conversation, closing its open session.
+
+        status records HOW it ended and cannot be recovered afterwards, so pass the one
+        that actually happened. Ending an already-ended conversation is a no-op, so a
+        retry after a dropped connection cannot overwrite it.
+
+        Allowed roles: api, admin, developer, billing, user.
+
+        Args:
+            conversation_id: The conversation to end (required).
+            status: "completed", "escalated", or "abandoned" (defaults to "completed").
+            metadata: Metadata merged onto the conversation.
+            token: Optional bearer token for authentication.
+            headers: Additional headers to include in the request.
+
+        Returns:
+            The ended conversation.
+
+        Raises:
+            SignalHouseValidationError: If conversation_id is missing.
+        """
+        self._sdk._require({"conversationId": conversation_id})
+        safe_id = quote(str(conversation_id), safe="")
+        body: dict[str, Any] = {}
+        if status is not None:
+            body["status"] = status
+        if metadata is not None:
+            body["metadata"] = metadata
+        return self._sdk._request(f"/agent/conversations/{safe_id}", method="PUT", body=body, token=token, headers=headers)
+
     def get_agent_channel_settings(
         self,
         agent_profile_id: str,
@@ -337,7 +536,20 @@ class Agents:
             agent_profile_id: The agent the setting belongs to.
             channel: The channel — "webchat", "sms", or "voice".
             setting_data: Fields to set: allowedTools (list[str]), enabled (bool),
-                channelPrompt (str), greeting (str | None).
+                channelPrompt (str), greeting (str | None), llmProvider ("bedrock" |
+                "openai" | "anthropic" | "groq", defaults to "bedrock"), llmModel
+                (str | None), temperature (0-2), and voiceId (str | None). Model
+                settings are per-channel because each channel is served by a
+                different runtime.
+
+                Spoken channels also accept: speed (0.7-1.2), stability (0-1),
+                similarityBoost (0-1), speechModel (str — how the agent is voiced,
+                chosen independently of llmModel), turnEagerness ("patient" |
+                "normal" | "eager"), turnTimeoutSeconds and initialWaitSeconds
+                (1-300, or -1 for no timeout), silenceEndCallSeconds (10-7200),
+                maxCallDurationSeconds (60-7200), allowGreetingInterruption (bool),
+                keyterms (list[str] the transcriber is biased toward), and
+                backgroundSound ({"preset": str, "volume": 0.01-1} | None).
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
 

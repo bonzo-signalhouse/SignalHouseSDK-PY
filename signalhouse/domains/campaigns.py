@@ -270,6 +270,45 @@ class Campaigns:
             headers=headers,
         )
 
+    def get_campaign_throughput_limits(
+        self,
+        *,
+        campaign_id: str,
+        token: str | None = None,
+        headers: dict[str, str] | None = None,
+    ) -> dict[str, Any]:
+        """Get the carrier throughput ceilings a campaign is currently sending under.
+
+        The AT&T per-minute limit (per campaign, held 10% under the published ceiling) and the
+        T-Mobile daily cap (per brand), each with its current tier and the next rung on the
+        ladder, plus today's T-Mobile usage. Resolved from the same brand status / brand score
+        rules the send path enforces with.
+
+        Args:
+            campaign_id: The campaign identifier.
+            token: Optional bearer token for authentication.
+            headers: Additional headers to include in the request.
+
+        Returns:
+            Standardized response dict: {campaignId, brandId, usecase, brand: {status, brandScore,
+            entityType}, att: {tier, scope, unit, sms: {limit}, mms: {limit}, marginPercent,
+            nextTier}, tmobile: {tier, scope, unit, dailyLimit, thresholds, nextTier,
+            usedToday: {date, segments, resetsAt} | None}}. A None tier/limit means the carrier
+            ladder does not apply (unverified brand, GOVERNMENT entity, PUBLIC_SAFETY_RESTRICTED
+            usecase); a None nextTier means the top rung or a usecase-capped (LOW_VOLUME) campaign.
+
+        Raises:
+            SignalHouseValidationError: If campaign_id is missing.
+        """
+        self._sdk._require({"campaignId": campaign_id})
+        query_string = self._sdk._get_query_string({"campaignId": campaign_id})
+        return self._sdk._request(
+            f"/campaign/throughput-limits{query_string}",
+            method="GET",
+            token=token,
+            headers=headers,
+        )
+
     def create_campaign(
         self,
         campaign_data: dict[str, Any],

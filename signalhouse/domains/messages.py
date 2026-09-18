@@ -47,6 +47,7 @@ class Messages:
         page: int | None = None,
         limit: int | None = None,
         channel: str | list[str] | None = None,
+        date_bounds: str | None = None,
         token: str | None = None,
         headers: dict[str, str] | None = None,
     ) -> dict[str, Any]:
@@ -69,12 +70,15 @@ class Messages:
                 produces, so unscored messages match no bucket and outbound messages are excluded.
             sender_phone_number: Filter by sender phone number.
             recipient_phone_number: Filter by recipient phone number.
-            start_date: ISO-8601 date or timestamp; normalized to start-of-UTC-day (inclusive).
-            end_date: ISO-8601 date or timestamp; normalized to end-of-UTC-day (inclusive). Hourly resolution is not supported.
+            start_date: ISO-8601 date or timestamp; bound per dateBounds: a bare date is always that whole UTC day (inclusive); a timestamp is widened to its whole UTC day in "day" mode and bound as the instant it names, in whatever offset it was written, in "exact" mode.
+            end_date: ISO-8601 date or timestamp; bound per dateBounds: a bare date is always that whole UTC day (inclusive); a timestamp is widened to its whole UTC day in "day" mode and bound as the instant it names, in whatever offset it was written, in "exact" mode. In "exact" mode day buckets align to the UTC offset this bound carries, so a client that sends its own midnights gets its own calendar dates back.
             sort_field: The field to sort by (createdAt, segmentCount, status, sentimentScore).
             sort_order: The sort order (asc, desc).
             page: The page number for pagination.
             limit: The number of messages per page.
+            date_bounds: Which contract binds start_date/end_date. "day": each bound is widened to its
+                whole UTC day. "exact": a timestamp is bound as the instant
+                it names and a bare date is its whole UTC day. Omitted: "day".
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
 
@@ -104,6 +108,7 @@ class Messages:
             "sortOrder": sort_order,
             "page": page,
             "limit": limit,
+            "dateBounds": date_bounds,
         })
         return self._sdk._request(
             f"/message{query_string}",
@@ -126,6 +131,7 @@ class Messages:
         end_date: str | None = None,
         channel: str | list[str] | None = None,
         message_type: str | list[str] | None = None,
+        date_bounds: str | None = None,
         token: str | None = None,
         headers: dict[str, str] | None = None,
     ) -> dict[str, Any]:
@@ -140,12 +146,15 @@ class Messages:
             carrier: Filter analytics by carrier.
             carrier_family: Filter analytics by the recipient's resolved carrier family (Default, ATT, TMobile, Verizon, USCellular, GoogleVoice, ClearSky, Interop, RogueMobile, P2P);
                 single value or list. Only accepted where the environment serves hourly analytics; elsewhere any value is rejected with a 400 -- omit the parameter unless it is wanted.
-            start_date: ISO-8601 date or timestamp; normalized to start-of-UTC-day (inclusive).
-            end_date: ISO-8601 date or timestamp; normalized to end-of-UTC-day (inclusive). Hourly resolution is not supported.
+            start_date: ISO-8601 date or timestamp; bound per dateBounds: a bare date is always that whole UTC day (inclusive); a timestamp is widened to its whole UTC day in "day" mode and bound as the instant it names, in whatever offset it was written, in "exact" mode.
+            end_date: ISO-8601 date or timestamp; bound per dateBounds: a bare date is always that whole UTC day (inclusive); a timestamp is widened to its whole UTC day in "day" mode and bound as the instant it names, in whatever offset it was written, in "exact" mode. In "exact" mode day buckets align to the UTC offset this bound carries, so a client that sends its own midnights gets its own calendar dates back.
             channel: Filter by channel — "tenDLC", "virtualLongCode", "tollFree", "shortCode", or "p2p" (single value or list).
                 Filters on the stored channel; a tenDLC selection also includes older messages with
                 no channel, and p2p is matched by carrier.
             message_type: Message type(s) the SENTIMENT figures are scoped to: SMS, MMS or P2P. Omit for all scored types. Does NOT narrow the message counts, which are always returned split per type and have no filterable type dimension.
+            date_bounds: Which contract binds start_date/end_date. "day": each bound is widened to its
+                whole UTC day. "exact": a timestamp is bound as the instant
+                it names and a bare date is its whole UTC day. Omitted: "day".
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
 
@@ -169,6 +178,7 @@ class Messages:
             "endDate": end_date,
             "channel": channel,
             "messageType": message_type,
+            "dateBounds": date_bounds,
         })
         return self._sdk._request(
             f"/message/analytics{query_string}",
@@ -193,6 +203,7 @@ class Messages:
         message_type: str | list[str] | None = None,
         granularity: str | None = None,
         breakdown: str | None = None,
+        date_bounds: str | None = None,
         token: str | None = None,
         headers: dict[str, str] | None = None,
     ) -> dict[str, Any]:
@@ -207,8 +218,8 @@ class Messages:
             carrier: Filter analytics by carrier.
             carrier_family: Filter analytics by the recipient's resolved carrier family (Default, ATT, TMobile, Verizon, USCellular, GoogleVoice, ClearSky, Interop, RogueMobile, P2P);
                 single value or list. Only accepted where the environment serves hourly analytics; elsewhere any value is rejected with a 400 -- omit the parameter unless it is wanted.
-            start_date: ISO-8601 date or timestamp. At day granularity it is normalized to start-of-UTC-day (inclusive); at hour granularity it is floored to its hour.
-            end_date: ISO-8601 date or timestamp. At day granularity it is normalized to end-of-UTC-day (inclusive); at hour granularity it is honoured as given.
+            start_date: ISO-8601 date or timestamp. It is bound per dateBounds: a bare date is always that whole UTC day (inclusive); a timestamp is widened to its whole UTC day in "day" mode and bound as the instant it names, in whatever offset it was written, in "exact" mode, then floored to the start of its hour at either granularity, because the hourly cube is keyed by hour and a mid-hour start would drop that hour's bucket.
+            end_date: ISO-8601 date or timestamp. At day granularity it is bound per dateBounds: a bare date is always that whole UTC day (inclusive); a timestamp is widened to its whole UTC day in "day" mode and bound as the instant it names, in whatever offset it was written, in "exact" mode. In "exact" mode day buckets align to the UTC offset this bound carries, so a client that sends its own midnights gets its own calendar dates back; at hour granularity it is honoured as given.
             channel: Filter by channel — "tenDLC", "virtualLongCode", "tollFree", "shortCode", or "p2p" (single value or list).
                 Filters on the stored channel; a tenDLC selection also includes older messages with
                 no channel, and p2p is a real channel here.
@@ -222,6 +233,9 @@ class Messages:
                 response ({dimension, rows}: each row is one byDate bucket (_id) for one carrier or
                 carrier family (key), top 50 keys by volume, 10DLC only) and caps the span at 31 days.
                 Only accepted where the environment serves hourly analytics; elsewhere any value is rejected with a 400 -- omit the parameter unless it is wanted.
+            date_bounds: Which contract binds start_date/end_date. "day": each bound is widened to its
+                whole UTC day. "exact": a timestamp is bound as the instant
+                it names and a bare date is its whole UTC day. Omitted: "day".
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
 
@@ -247,9 +261,77 @@ class Messages:
             "messageType": message_type,
             "granularity": granularity,
             "breakdown": breakdown,
+            "dateBounds": date_bounds,
         })
         return self._sdk._request(
             f"/message/analytics/detail{query_string}",
+            method="GET",
+            token=token,
+            headers=headers,
+        )
+
+    def get_analytics_throughput(
+        self,
+        *,
+        group_id: str,
+        brand_id: str | list[str] | None = None,
+        campaign_id: str | list[str] | None = None,
+        carrier_family: str | list[str] | None = None,
+        start_date: str,
+        end_date: str,
+        granularity: str | None = None,
+        ceiling: int | None = None,
+        date_bounds: str | None = None,
+        token: str | None = None,
+        headers: dict[str, str] | None = None,
+    ) -> dict[str, Any]:
+        """Get per-minute send throughput per time bucket and per carrier family.
+
+        Peak segments per minute, sending minutes and minutes at a ceiling, measured from SENT
+        transitions at campaign x carrier-family grain -- the grain carrier ceilings are enforced
+        at -- so a peak here is the figure a ceiling is compared against. Only accepted where the
+        environment serves hourly analytics; elsewhere the request is rejected with a 400.
+
+        Args:
+            group_id: The group to scope the read to.
+            brand_id: Brand scope (single value or list).
+            campaign_id: Campaign scope; wins over brand_id (single value or list).
+            carrier_family: Carrier-family filter (ATT, TMobile, Verizon, USCellular, ...); single value or list.
+            start_date: ISO-8601 date or timestamp. bound per dateBounds: a bare date is always that whole UTC day (inclusive); a timestamp is widened to its whole UTC day in "day" mode and bound as the instant it names, in whatever offset it was written, in "exact" mode, then
+                floored to the start of its hour at hour granularity and of its minute at day granularity
+                (the cube is keyed by minute).
+            end_date: ISO-8601 date or timestamp. At hour granularity honoured as given; at day
+                granularity bound per dateBounds: a bare date is always that whole UTC day (inclusive); a timestamp is widened to its whole UTC day in "day" mode and bound as the instant it names, in whatever offset it was written, in "exact" mode. In "exact" mode day buckets align to the UTC offset this bound carries, so a client that sends its own midnights gets its own calendar dates back. The span is capped at 35 days.
+            granularity: Bucket grain of the byDate and byBreakdown rows: "hour" (default; each row's
+                _id is a "YYYY-MM-DD HH:MM:SS" UTC hour, span capped at 7 days) or "day".
+            ceiling: Segments-per-minute ceiling. When given, every row also reports minutesAtCeiling
+                (sending minutes at or above it); otherwise minutesAtCeiling is None.
+            date_bounds: Which contract binds start_date/end_date. "day": each bound is widened to its
+                whole UTC day. "exact": a timestamp is bound as the instant
+                it names and a bare date is its whole UTC day. Omitted: "day".
+            token: Optional bearer token for authentication.
+            headers: Additional headers to include in the request.
+
+        Returns:
+            Standardized response dict with totals, byDate, byCarrierFamily and byBreakdown
+            ({dimension: "carrierFamily", rows}). Every row carries segments, messages,
+            peakSegmentsPerMinute, peakMessagesPerMinute, peakMinute (UTC "YYYY-MM-DD HH:MM:SS",
+            None when no traffic), sendingMinutes, averageSegmentsPerSendingMinute and
+            minutesAtCeiling.
+        """
+        query_string = self._sdk._get_query_string({
+            "groupId": group_id,
+            "brandId": brand_id,
+            "campaignId": campaign_id,
+            "carrierFamily": carrier_family,
+            "startDate": start_date,
+            "endDate": end_date,
+            "granularity": granularity,
+            "ceiling": ceiling,
+            "dateBounds": date_bounds,
+        })
+        return self._sdk._request(
+            f"/message/analytics/throughput{query_string}",
             method="GET",
             token=token,
             headers=headers,
@@ -300,6 +382,7 @@ class Messages:
         limit: int | None = None,
         channel: str | list[str] | None = None,
         message_type: str | list[str] | None = None,
+        date_bounds: str | None = None,
         token: str | None = None,
         headers: dict[str, str] | None = None,
     ) -> dict[str, Any]:
@@ -321,6 +404,9 @@ class Messages:
                 (single value or list). Omit for all scored types. Does NOT narrow the message
                 counts, which are always returned split per type and have no filterable type
                 dimension.
+            date_bounds: Which contract binds start_date/end_date. "day": each bound is widened to its
+                whole UTC day. "exact": a timestamp is bound as the instant
+                it names and a bare date is its whole UTC day. Omitted: "day".
 
         Returns:
             Standardized response dict with rows, totalCount, page, and limit. Each row carries that
@@ -346,6 +432,7 @@ class Messages:
             "limit": limit,
             "channel": channel,
             "messageType": message_type,
+            "dateBounds": date_bounds,
         })
         return self._sdk._request(
             f"/message/analytics/by-subgroup{query_string}",
@@ -369,6 +456,7 @@ class Messages:
         page: int | None = None,
         limit: int | None = None,
         channel: str | list[str] | None = None,
+        date_bounds: str | None = None,
         token: str | None = None,
         headers: dict[str, str] | None = None,
     ) -> dict[str, Any]:
@@ -383,6 +471,9 @@ class Messages:
             channel: "both" (default, every code) or "tenDLC" / "virtualLongCode" / "tollFree" / "shortCode" / "p2p" (single value
                 or list). Scopes the ORDER BY + totalCount by the stored channel column; when one
                 channel is selected, totalErrors reflects only that channel.
+            date_bounds: Which contract binds start_date/end_date. "day": each bound is widened to its
+                whole UTC day. "exact": a timestamp is bound as the instant
+                it names and a bare date is its whole UTC day. Omitted: "day".
 
         Returns:
             Standardized response dict with rows, totalCount, totalErrors, page, and limit.
@@ -400,6 +491,7 @@ class Messages:
             "page": page,
             "limit": limit,
             "channel": channel,
+            "dateBounds": date_bounds,
         })
         return self._sdk._request(
             f"/message/analytics/by-error-code{query_string}",
@@ -420,6 +512,7 @@ class Messages:
         start_date: str | None = None,
         end_date: str | None = None,
         channel: str | list[str] | None = None,
+        date_bounds: str | None = None,
         token: str | None = None,
         headers: dict[str, str] | None = None,
     ) -> dict[str, Any]:
@@ -432,11 +525,14 @@ class Messages:
             campaign_id: Filter by campaign ID.
             phone_number: Filter by phone number.
             carrier: Filter by carrier.
-            start_date: ISO-8601 date or timestamp; normalized to start-of-UTC-day (inclusive).
-            end_date: ISO-8601 date or timestamp; normalized to end-of-UTC-day (inclusive). Hourly resolution is not supported.
+            start_date: ISO-8601 date or timestamp; bound per dateBounds: a bare date is always that whole UTC day (inclusive); a timestamp is widened to its whole UTC day in "day" mode and bound as the instant it names, in whatever offset it was written, in "exact" mode.
+            end_date: ISO-8601 date or timestamp; bound per dateBounds: a bare date is always that whole UTC day (inclusive); a timestamp is widened to its whole UTC day in "day" mode and bound as the instant it names, in whatever offset it was written, in "exact" mode. In "exact" mode day buckets align to the UTC offset this bound carries, so a client that sends its own midnights gets its own calendar dates back.
             channel: Filter by channel — "tenDLC", "virtualLongCode", "tollFree", or "shortCode" (single value or list). Opt-outs are
                 A2P-only, so "p2p" applies no filter. A tenDLC selection also includes older opt-outs
                 with no channel.
+            date_bounds: Which contract binds start_date/end_date. "day": each bound is widened to its
+                whole UTC day. "exact": a timestamp is bound as the instant
+                it names and a bare date is its whole UTC day. Omitted: "day".
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
 
@@ -458,6 +554,7 @@ class Messages:
             "startDate": start_date,
             "endDate": end_date,
             "channel": channel,
+            "dateBounds": date_bounds,
         })
         return self._sdk._request(
             f"/message/dnc/analytics{query_string}",
@@ -482,6 +579,7 @@ class Messages:
         sort_field: str | None = None,
         sort_order: str | None = None,
         channel: str | list[str] | None = None,
+        date_bounds: str | None = None,
         token: str | None = None,
         headers: dict[str, str] | None = None,
     ) -> dict[str, Any]:
@@ -494,8 +592,8 @@ class Messages:
             campaign_id: Filter by campaign ID.
             phone_number: Filter by phone number.
             carrier: Filter by carrier.
-            start_date: ISO-8601 date or timestamp; normalized to start-of-UTC-day (inclusive).
-            end_date: ISO-8601 date or timestamp; normalized to end-of-UTC-day (inclusive). Hourly resolution is not supported.
+            start_date: ISO-8601 date or timestamp; bound per dateBounds: a bare date is always that whole UTC day (inclusive); a timestamp is widened to its whole UTC day in "day" mode and bound as the instant it names, in whatever offset it was written, in "exact" mode.
+            end_date: ISO-8601 date or timestamp; bound per dateBounds: a bare date is always that whole UTC day (inclusive); a timestamp is widened to its whole UTC day in "day" mode and bound as the instant it names, in whatever offset it was written, in "exact" mode. In "exact" mode day buckets align to the UTC offset this bound carries, so a client that sends its own midnights gets its own calendar dates back.
             page: Page number for pagination.
             limit: Number of records per page.
             sort_field: Field to sort by.
@@ -503,6 +601,9 @@ class Messages:
             channel: Filter by channel — "tenDLC", "virtualLongCode", "tollFree", or "shortCode" (single value or list). Opt-outs are
                 A2P-only, so "p2p" applies no filter. A tenDLC selection also includes older opt-outs
                 with no channel.
+            date_bounds: Which contract binds start_date/end_date. "day": each bound is widened to its
+                whole UTC day. "exact": a timestamp is bound as the instant
+                it names and a bare date is its whole UTC day. Omitted: "day".
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
 
@@ -529,6 +630,7 @@ class Messages:
             "sortField": sort_field,
             "sortOrder": sort_order,
             "channel": channel,
+            "dateBounds": date_bounds,
         })
         return self._sdk._request(
             f"/message/dnc{query_string}",
