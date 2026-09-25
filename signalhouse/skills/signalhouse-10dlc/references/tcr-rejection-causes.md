@@ -5,8 +5,7 @@ Loaded on demand, and only needed once something has actually been rejected.
 Every cause below is drawn from a **real Signal House support ticket** or verified against the
 API, with the source noted. Nothing here is general industry knowledge.
 
-> **Review status:** engineer-verified. Still needs the named business reviewer per
-> [CONTRIBUTING.md](../../../CONTRIBUTING.md), since this is compliance-bearing content.
+> **Review status:** engineer-verified against support tickets and the API.
 
 ## How to read a rejection
 
@@ -43,9 +42,10 @@ Two distinct real causes share this code.
 **`Invalid sub-usecases: SOCIAL`.** `SOCIAL` is not a valid sub-use-case under any parent,
 neither `LOW_VOLUME` nor `MIXED`. Valid sub-use-cases for `LOW_VOLUME` are
 `ACCOUNT_NOTIFICATION`, `CUSTOMER_CARE`, `DELIVERY_NOTIFICATION`, `MARKETING`. Signal House's own
-validation now rejects `SOCIAL` as a `subUsecases` value with an immediate 400 before the request
-ever reaches TCR (SHGHL-2943), so this specific 501 should no longer be reachable through the
-API — `SOCIAL` is still a valid top-level `usecase`, just never a sub-use-case.
+validation now rejects `SOCIAL` as a `subUsecases` value with an immediate 400, before the request
+reaches TCR, so this 501 should no longer be reachable through the API. `SOCIAL` is still a valid
+top-level `usecase`, just never a sub-use-case. If an older campaign carries this rejection,
+resubmit with `SOCIAL` removed from `subUsecases`.
 
 **Punctuation in a tag.** A tag of `maria-answers` was rejected for containing a hyphen. The
 campaign content was fine. Fix the tag (`mariaanswers`), then the campaign has to be
@@ -102,10 +102,3 @@ for `PENDING_REVIEW` / `REJECTED` / `TCR_REGISTER_FAILED` when the campaign is *
 at the moment it fails. This is deliberate, because those states are appealable and re-registerable,
 but it means a customer who abandons failed campaigns keeps funds tied up. Deleting the dead
 campaign frees them.
-
-## Open questions for the business reviewer
-
-1. **The full valid sub-use-case set per parent use case.** Four are confirmed for `LOW_VOLUME`
-   from a support ticket (`ACCOUNT_NOTIFICATION`, `CUSTOMER_CARE`, `DELIVERY_NOTIFICATION`,
-   `MARKETING`). The complete mapping should come from TCR's own documentation rather than being
-   inferred from the tickets we happen to have.

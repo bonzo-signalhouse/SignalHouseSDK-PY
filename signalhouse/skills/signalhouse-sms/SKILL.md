@@ -73,9 +73,9 @@ is a 400, not an unbounded query. The API refuses rather than scanning.
 
 ## Where to look it up
 
-- **Every send parameter, the full status table and delivery receipts:** the internal Sending
-  Messages guide (`documentation/dev-documentation/05-sending-messages.md`).
+- **Every send parameter, message statuses and delivery receipts:** the Messages reference,
+  https://app2.signalhouse.io/docs/messages.
 - **Current per-group fees:** `GET /billing/fees/:groupId`.
-- **Failure codes and what is retryable:** the Error Handling guide (`08-error-handling.md`).
-- **Backoff and batching:** the Rate Limits guide (`09-rate-limits.md`).
+- **Failure codes and what is retryable:** https://app2.signalhouse.io/docs/error-handling.
+- **Backoff and batching:** https://app2.signalhouse.io/docs/rate-limits.
 - **Why a number cannot send yet:** `signalhouse-10dlc`.

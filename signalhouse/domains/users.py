@@ -158,7 +158,11 @@ class Users:
 
         Args:
             data: The data for the new service user. Required fields include groupId,
-                  name, and role.
+                  name, and role. Optional for customer API keys (role "api"):
+                  allowedIps (list of IPv4/IPv6 addresses or CIDR ranges, max 100) and
+                  allowedCountries (list of ISO 3166-1 alpha-2 codes such as "US", max 250).
+                  The key is then only accepted from matching callers; when both are set,
+                  both must match.
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
 
@@ -189,7 +193,10 @@ class Users:
 
         Args:
             id: The ID of the user to update.
-            data: The data to update for the user.
+            data: The data to update for the user. For a customer API key, allowedIps
+                  and allowedCountries replace its restrictions ([] removes one). Changing
+                  restrictions needs an interactive admin or developer session; an API key
+                  cannot change its own.
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
 

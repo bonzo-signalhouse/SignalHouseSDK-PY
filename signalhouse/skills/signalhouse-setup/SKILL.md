@@ -4,8 +4,9 @@ description: >-
   Getting a Signal House integration authenticated and wired: login vs service-user tokens, what a
   token is scoped to, SDK initialization, and why webhooks come before the first write.
   TRIGGER when the user is starting a Signal House integration, asks how to authenticate, asks for
-  an API key or token, is choosing a base URL, is installing or initializing the SDK, is getting a
-  401 or 403, or asks why their token stopped working.
+  an API key or token, is choosing a base URL, is installing or initializing the SDK, is connecting
+  Claude, Cursor or another AI client to Signal House (MCP), is getting a 401 or 403, or asks why
+  their token stopped working.
   SKIP for message sending, 10DLC registration, number purchase and webhook event semantics, which
   have their own skills. This one ends at "the first authenticated call succeeds".
 ---
@@ -25,8 +26,8 @@ Authentication guide or the environment rather than quoting a number to a custom
 
 **A service user cannot be bootstrapped from nothing.** `POST /user/serviceuser` needs an existing
 group and a token that is already privileged enough to mint one. The first credential in a new
-integration comes from a human logging in or from Signal House provisioning it, not from an API call
-made with no credential.
+integration comes from a human logging in (including approving an OAuth connection, below) or from
+Signal House provisioning it, not from an API call made with no credential.
 
 **`role: "signalhouse_api"` is not available to customers.** The two roles `POST /user/serviceuser`
 accepts are `api` (customer key, scoped to one `groupId`) and `signalhouse_api` (internal, requires
@@ -62,6 +63,33 @@ on it. See `signalhouse-10dlc`.
    without webhooks discovers outcomes by polling, burns rate limit doing it, and still finds out
    late. See `signalhouse-webhooks`.
 
+## Connecting an AI client (MCP)
+
+Signal House runs a hosted MCP server at `https://mcp.signalhouse.io/mcp`. It holds no credentials
+of its own: every call is forwarded to the API with the caller's own token, so an agent can do
+exactly what that token can do and nothing more.
+
+- **Claude (web, Desktop, mobile): connect with OAuth.** Settings > Connectors > Add custom
+  connector, paste the URL, leave the client ID and secret blank, then log in to Signal House and
+  approve. No API key is copied anywhere. This is the path to recommend to a person.
+- **Clients configured by file or command (Claude Code, Cursor and similar):** send an API key as a
+  bearer header, e.g.
+  `claude mcp add --transport http signalhouse https://mcp.signalhouse.io/mcp --header "Authorization: Bearer <API key>"`.
+  Claude Code can also do the OAuth flow: add it without the header and authenticate from `/mcp`.
+
+What an OAuth connection can and cannot do:
+
+- **It acts as the user who approved it, with that user's full role.** Scopes are not enforced, so
+  do not tell a customer a connection is "read-only" or limited to part of the account.
+- **It cannot mint credentials or manage the login.** Routes under `/user` and `/auth` refuse a
+  connector token with a **403**, so an agent on an OAuth connection cannot create service users or
+  API keys. A 403 there is by design, not a bug to work around; create keys in the portal.
+- **It is revoked by the user**, in the portal under Settings > Security > Connected Applications.
+  After that the client has to reconnect.
+
+For an unattended server integration, the rules above still hold: use a service-user API key, not
+an OAuth connection, which exists for a person working through an AI client.
+
 ## Reading the response
 
 The SDK returns an **envelope**, and most failures arrive inside it rather than as an exception:
@@ -82,10 +110,12 @@ current shape from the API reference rather than assuming it matches a sibling e
 
 ## Where to look it up
 
-- **Auth flows, service users, the full role table, token practice:** the internal Authentication
-  guide (`documentation/dev-documentation/02-authentication.md`).
-- **First working call end to end:** the Quickstart (`01-quickstart.md`).
-- **Envelope shapes, error classes and status codes:** the Error Handling guide (`08-error-handling.md`).
-- **Backoff, batching and pagination:** the Rate Limits guide (`09-rate-limits.md`).
-- **What a role is allowed to do:** the role table in the Authentication guide. Roles are checked
-  server-side, so a plan that assumes more access than the token has fails at the call, not earlier.
+- **Auth flows, service users, the full role table, token practice:** the Authentication reference,
+  https://app2.signalhouse.io/docs/authentication.
+- **The OAuth connection flow:** https://app2.signalhouse.io/docs/oauth.
+- **First working call end to end:** https://app2.signalhouse.io/docs/getting-started.
+- **Envelope shapes, error classes and status codes:** https://app2.signalhouse.io/docs/error-handling.
+- **Backoff, batching and pagination:** https://app2.signalhouse.io/docs/rate-limits.
+- **What a role is allowed to do:** the role table in the Authentication reference. Roles are
+  checked server-side, so a plan that assumes more access than the token has fails at the call, not
+  earlier.

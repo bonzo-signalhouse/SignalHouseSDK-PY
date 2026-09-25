@@ -103,8 +103,11 @@ class Webhooks:
     ) -> dict[str, Any]:
         """Update an existing webhook with the specified data.
 
-        Like every other read of a webhook, the response carries `hasSigningSecret` (bool), never
-        the signing secret itself — see `create_webhook`.
+        `update_data` may include `name`, `url`, `subscribedEvents`, and `authType`,
+        `apiHeaderPrefix` and `credentials` (`{"key", "secret"?}`) to change the endpoint's own
+        credentials in place; credentials are required when switching to an auth type that needs them.
+        Like every read of a webhook, the response carries `hasSigningSecret` and `hasCredentials`
+        (bools), never a secret or credential.
 
         Args:
             id: The ID of the webhook to update.
@@ -124,6 +127,43 @@ class Webhooks:
             f"/webhook/{safe_id}",
             method="PUT",
             body=update_data,
+            token=token,
+            headers=headers,
+        )
+
+    def rotate_webhook_secret(
+        self,
+        id: str,
+        grace_seconds: int | None = None,
+        *,
+        token: str | None = None,
+        headers: dict[str, str] | None = None,
+    ) -> dict[str, Any]:
+        """Rotate a webhook's signing secret, or give a webhook created before signing its first one.
+
+        The response includes the new plaintext `signingSecret`, returned this one time only. The
+        replaced secret keeps working for `grace_seconds` (default 86400, max 604800, 0 = stop now);
+        during that window each delivery's `X-SignalHouse-Signature-V1` header carries a signature for
+        both, and `previousSecretExpiresAt` in the response says when the old one stops.
+
+        Args:
+            id: The ID of the webhook.
+            grace_seconds: How long the replaced secret stays valid.
+            token: Optional bearer token for authentication.
+            headers: Additional headers to include in the request.
+
+        Returns:
+            Standardized response dict.
+
+        Raises:
+            SignalHouseValidationError: If id is missing.
+        """
+        self._sdk._require({"id": id})
+        safe_id = quote(str(id), safe="")
+        return self._sdk._request(
+            f"/webhook/{safe_id}/rotate-secret",
+            method="POST",
+            body={} if grace_seconds is None else {"graceSeconds": grace_seconds},
             token=token,
             headers=headers,
         )

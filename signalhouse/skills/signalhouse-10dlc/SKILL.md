@@ -84,16 +84,12 @@ The two with constrained values, which is where callers get stuck:
 | Field | Values |
 |---|---|
 | `entityType` | `PRIVATE_PROFIT`, `PUBLIC_PROFIT`, `NON_PROFIT`, `GOVERNMENT` |
-| `vertical` | one of 23 industry values: `PROFESSIONAL`, `REAL_ESTATE`, `HEALTHCARE`, `FINANCIAL`, `TECHNOLOGY`, `RETAIL` and so on. Do not guess; read the list from the registration guide. |
+| `vertical` | one of 23 industry values: `PROFESSIONAL`, `REAL_ESTATE`, `HEALTHCARE`, `FINANCIAL`, `TECHNOLOGY`, `RETAIL` and so on. Do not guess; read the list from the Brands reference. |
 
 **`brandRelationship` is not a field you set.** The service overwrites it before validation runs,
 and every 10DLC brand ends up `MEDIUM_ACCOUNT` regardless of what was sent. Whatever a caller
 passes is discarded silently. Do not ask a customer to choose one, and do not report it back as
 something they selected.
-
-> ⚠️ The 10DLC Registration Guide's own required-fields table still lists `brandRelationship` as a
-> required, caller-chosen field. It is wrong on this point; `03-api-reference/02-brands.md` and
-> the service code agree that it is ignored. Tracked as **SHGHL-2946**.
 
 `PUBLIC_PROFIT` additionally requires `stockSymbol`, `stockExchange`, `website` and
 `businessContactEmail`.
@@ -166,11 +162,11 @@ Never state a current status, price, or throughput figure from memory. Read it:
 - **Whether a specific send will be allowed:** attempt it and read the error, or check campaign
   state first. There is no separate preflight endpoint.
 
-- **The full field lists, verticals, use cases, status meanings and worked examples:** the
-  internal 10DLC Registration Guide (`documentation/dev-documentation/07-10dlc-registration.md`)
-  and the published help-centre articles *10DLC Messaging Overview*, *10DLC Campaign Website
+- **The full field lists, verticals, use cases, status meanings and worked examples:** the Brands
+  and Campaigns references (https://app2.signalhouse.io/docs/brands,
+  https://app2.signalhouse.io/docs/campaigns) and the published help-centre articles *10DLC Messaging Overview*, *10DLC Campaign Website
   Review* and *10DLC Campaign Approvals*. This skill is a condensed guardrail, not a substitute
-  for them. Where it and the guide disagree, the guide wins and this file is the bug.
+  for them. Where it and the references disagree, the references win and this file is the bug.
 
 The platform enforces every constraint on this page. This skill exists so an agent stops
 *before* a rejected registration or a failed send, not so it can predict the outcome.

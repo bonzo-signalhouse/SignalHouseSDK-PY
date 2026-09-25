@@ -219,7 +219,7 @@ class Numbers:
             voice_enabled: Filter for voice enabled numbers.
             country: Filter by country code (e.g., "US").
             state: Filter by state code (e.g., "CA").
-            city: City prefix; requires country US/CA and state/province.
+            city: City prefix; requires country US and state.
             npa: Filter by NPA (area code).
             nxx: Filter by NXX (central office code).
             phone_number: Filter by phone number.
@@ -269,7 +269,7 @@ class Numbers:
         Args:
             phone_numbers: The list of phone numbers to purchase.
             subgroup_id: The ID of the subgroup to assign the purchased numbers to.
-            country: US (default) or CA. Canadian long codes are Ready on purchase.
+            country: ISO-2 purchase country; US (default).
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
 
@@ -306,8 +306,8 @@ class Numbers:
         Args:
             quantity: The number of Toll-Free numbers to purchase (1-10).
             subgroup_id: The subgroup the purchased numbers are assigned to.
-            country: US (default) or CA. Both use the shared Toll Free registry;
-                sending requires an approved brand and campaign.
+            country: ISO-2 purchase country; US (default). Sending requires an
+                approved brand and campaign.
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
 

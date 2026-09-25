@@ -21,7 +21,11 @@ class Messages:
         self._sdk = sdk
 
     def estimate_message(self, sender_phone_number: str, recipient_phone_numbers: list[str], message_body: str, *, message_type: str = "SMS", token: str | None = None, headers: dict[str, str] | None = None) -> dict[str, Any]:
-        """Estimate Canadian SMS/MMS using cached carriers. Rates and totals are microdollars; no charge or send."""
+        """Estimate Canadian SMS/MMS retail cost in microdollars; no charge or send.
+
+        Requires a Ready Canadian sender and Canadian or US recipients, and is unavailable unless Canada is
+        enabled for the environment.
+        """
         return self._sdk._request("/message/estimate", method="POST", body={"senderPhoneNumber": sender_phone_number, "recipientPhoneNumbers": recipient_phone_numbers, "messageBody": message_body, "messageType": message_type}, token=token, headers=headers)
 
     def get_messages(
@@ -40,6 +44,7 @@ class Messages:
         message_type: str | list[str] | None = None,
         carrier: str | None = None,
         sentiment_label: str | list[str] | None = None,
+        error_code: str | list[str] | None = None,
         start_date: str | None = None,
         end_date: str | None = None,
         sort_field: str | None = None,
@@ -68,6 +73,9 @@ class Messages:
             sentiment_label: Filter by sentiment bucket — "positive", "neutral", or "negative"
                 (single value or list). Applied as the sentimentScore range the ±25 label threshold
                 produces, so unscored messages match no bucket and outbound messages are excluded.
+            error_code: Filter FAILED messages by Signal House error code (single value or list). "OUT" is the
+                campaign opt-out, displayed as RECIPIENT_OPTED_OUT. Carrier codes are not filterable
+                here; they live inside successOrFailureReason.
             sender_phone_number: Filter by sender phone number.
             recipient_phone_number: Filter by recipient phone number.
             start_date: ISO-8601 date or timestamp; bound per dateBounds: a bare date is always that whole UTC day (inclusive); a timestamp is widened to its whole UTC day in "day" mode and bound as the instant it names, in whatever offset it was written, in "exact" mode.
@@ -102,6 +110,7 @@ class Messages:
             "channel": channel,
             "carrier": carrier,
             "sentimentLabel": sentiment_label,
+            "errorCode": error_code,
             "startDate": start_date,
             "endDate": end_date,
             "sortField": sort_field,
@@ -144,7 +153,7 @@ class Messages:
             campaign_id: Filter analytics by campaign ID.
             phone_number: Filter analytics by phone number.
             carrier: Filter analytics by carrier.
-            carrier_family: Filter analytics by the recipient's resolved carrier family (Default, ATT, TMobile, Verizon, USCellular, GoogleVoice, ClearSky, Interop, RogueMobile, P2P);
+            carrier_family: Filter analytics by the recipient's resolved carrier family (Default, ATT, TMobile, Verizon, USCellular, GoogleVoice, ClearSky, Interop, RogueMobile, P2P, Standard, IceWireless);
                 single value or list. Only accepted where the environment serves hourly analytics; elsewhere any value is rejected with a 400 -- omit the parameter unless it is wanted.
             start_date: ISO-8601 date or timestamp; bound per dateBounds: a bare date is always that whole UTC day (inclusive); a timestamp is widened to its whole UTC day in "day" mode and bound as the instant it names, in whatever offset it was written, in "exact" mode.
             end_date: ISO-8601 date or timestamp; bound per dateBounds: a bare date is always that whole UTC day (inclusive); a timestamp is widened to its whole UTC day in "day" mode and bound as the instant it names, in whatever offset it was written, in "exact" mode. In "exact" mode day buckets align to the UTC offset this bound carries, so a client that sends its own midnights gets its own calendar dates back.
@@ -216,7 +225,7 @@ class Messages:
             campaign_id: Filter analytics by campaign ID.
             phone_number: Filter analytics by phone number.
             carrier: Filter analytics by carrier.
-            carrier_family: Filter analytics by the recipient's resolved carrier family (Default, ATT, TMobile, Verizon, USCellular, GoogleVoice, ClearSky, Interop, RogueMobile, P2P);
+            carrier_family: Filter analytics by the recipient's resolved carrier family (Default, ATT, TMobile, Verizon, USCellular, GoogleVoice, ClearSky, Interop, RogueMobile, P2P, Standard, IceWireless);
                 single value or list. Only accepted where the environment serves hourly analytics; elsewhere any value is rejected with a 400 -- omit the parameter unless it is wanted.
             start_date: ISO-8601 date or timestamp. It is bound per dateBounds: a bare date is always that whole UTC day (inclusive); a timestamp is widened to its whole UTC day in "day" mode and bound as the instant it names, in whatever offset it was written, in "exact" mode, then floored to the start of its hour at either granularity, because the hourly cube is keyed by hour and a mid-hour start would drop that hour's bucket.
             end_date: ISO-8601 date or timestamp. At day granularity it is bound per dateBounds: a bare date is always that whole UTC day (inclusive); a timestamp is widened to its whole UTC day in "day" mode and bound as the instant it names, in whatever offset it was written, in "exact" mode. In "exact" mode day buckets align to the UTC offset this bound carries, so a client that sends its own midnights gets its own calendar dates back; at hour granularity it is honoured as given.
@@ -392,7 +401,7 @@ class Messages:
         callers can apply channel toggles client-side.
 
         Args:
-            carrier_family: Filter analytics by the recipient's resolved carrier family (Default, ATT, TMobile, Verizon, USCellular, GoogleVoice, ClearSky, Interop, RogueMobile, P2P);
+            carrier_family: Filter analytics by the recipient's resolved carrier family (Default, ATT, TMobile, Verizon, USCellular, GoogleVoice, ClearSky, Interop, RogueMobile, P2P, Standard, IceWireless);
                 single value or list. Only accepted where the environment serves hourly analytics; elsewhere any value is rejected with a 400 -- omit the parameter unless it is wanted.
             page: Page number (default 1).
             limit: Rows per page, max 50.
@@ -464,7 +473,7 @@ class Messages:
         contains per-channel (sms/mms/p2p) error counts plus an enriched description.
 
         Args:
-            carrier_family: Filter analytics by the recipient's resolved carrier family (Default, ATT, TMobile, Verizon, USCellular, GoogleVoice, ClearSky, Interop, RogueMobile, P2P);
+            carrier_family: Filter analytics by the recipient's resolved carrier family (Default, ATT, TMobile, Verizon, USCellular, GoogleVoice, ClearSky, Interop, RogueMobile, P2P, Standard, IceWireless);
                 single value or list. Only accepted where the environment serves hourly analytics; elsewhere any value is rejected with a 400 -- omit the parameter unless it is wanted.
             page: Page number (default 1).
             limit: Rows per page, max 50.
@@ -517,6 +526,13 @@ class Messages:
         headers: dict[str, str] | None = None,
     ) -> dict[str, Any]:
         """Get aggregated DNC (Do Not Contact) opt-out analytics with optional filters.
+
+        Returns totals, byDate, byPhoneNumber, bySenderNumber, byCampaign, bySubgroup, byType,
+        byCarrier, byKeyword. bySenderNumber ({senderPhoneNumber, total, sms, mms}) attributes each
+        opt-out to the first business number that received it, so it is unchanged by later campaign
+        moves and START replies. byCampaign counts campaign-scoped opt-outs only, by the campaign at
+        the time of the STOP; subgroup-scoped opt-outs (non-US recipients) are never attributed to a
+        campaign and appear under bySubgroup instead. byType splits SMS/MMS.
 
         Args:
             group_id: Filter by group ID.
@@ -609,11 +625,14 @@ class Messages:
 
         Returns:
             Standardized response dict with paginated DNC records. Each record carries
+            ``senderPhoneNumber`` — the first business number that received the opt-out (set once,
+            never changed by a later STOP or a campaign move; the same value as ``phoneNumber``),
+            ``campaignId`` (``None`` on subgroup-scoped records for non-US recipients),
             ``optOutKeyword`` — the normalized keyword that revoked consent (e.g. "stop",
             "opt out"; a repeat opt-out records the most recent word), ``None`` for opt-outs
             recorded before keyword capture shipped — and ``carrierFamily``, the resolved carrier
             family of the recipient number (Default, ATT, TMobile, Verizon, USCellular,
-            GoogleVoice, ClearSky, Interop, RogueMobile), copied from the inbound message that
+            GoogleVoice, ClearSky, Interop, RogueMobile, Standard, IceWireless), copied from the inbound message that
             triggered the opt-out.
         """
         query_string = self._sdk._get_query_string({

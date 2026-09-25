@@ -78,7 +78,7 @@ constraint is nearly always the part that changes the plan.
 
 ## Where to look it up
 
-- **The full setup pipeline in one place:** the internal 10DLC Registration guide
-  (`documentation/dev-documentation/07-10dlc-registration.md`).
-- **A first working call:** the Quickstart (`01-quickstart.md`).
+- **The full setup pipeline:** the Brands and Campaigns references
+  (https://app2.signalhouse.io/docs/brands, https://app2.signalhouse.io/docs/campaigns).
+- **A first working call:** https://app2.signalhouse.io/docs/getting-started.
 - **Current fees and balance:** the billing endpoints, read live, per group.

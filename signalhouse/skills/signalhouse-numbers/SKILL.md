@@ -76,8 +76,7 @@ cost".
 ## Where to look it up
 
 - **Search filters, NPA/NXX lookup, friendly names, per-number inbound webhook URLs, and the
-  release semantics:** the internal Number Management Guide
-  (`documentation/dev-documentation/06-number-management.md`).
+  release semantics:** the Numbers reference, https://app2.signalhouse.io/docs/numbers.
 - **Current fees:** `GET /billing/fees/:groupId`.
 - **Current balance before a bulk buy:** the wallet endpoints under `/billing/wallet`.
 - **Whether a number can send:** its campaign's state, not the number's. See `signalhouse-10dlc`.

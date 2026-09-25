@@ -1,6 +1,6 @@
 {
   "source": "https://github.com/bonzo-signalhouse/agent-skills.git",
-  "ref": "v0.2.0",
+  "ref": "v0.3.0",
   "skills": [
     "signalhouse-10dlc",
     "signalhouse-advisor",
@@ -10,13 +10,13 @@
     "signalhouse-webhooks"
   ],
   "files": {
-    "signalhouse-10dlc/SKILL.md": "b10ed2f759edcfcc9099c56285341ff0fbc9c131b2fd4b2d47922067128e79c2",
+    "signalhouse-10dlc/SKILL.md": "6a46fddf1572b39849c07855c6ece3d3499c711e5ffa6f466d73ab54182fd49f",
     "signalhouse-10dlc/examples/brightsmile-onboarding.md": "b5c04a551bc918f2563f1d1e59e516cf2e60fa7233490e3312a92dd1d1e9d473",
-    "signalhouse-10dlc/references/tcr-rejection-causes.md": "8347a1656035626e0fc77dca49a0d06800e077ec8a4dc6e7e89208d90e8aeb2f",
-    "signalhouse-advisor/SKILL.md": "9e3542f4b8c56474db4167535b2310432456bf935578a160a255b8a7d84d7738",
-    "signalhouse-numbers/SKILL.md": "47ebcd18cb0bda80ebfefa1165540117c4712691356d602c76ab9e29a69c6626",
-    "signalhouse-setup/SKILL.md": "0e3743d9a6adf8516d0d194c952090af2875605c82d3a397c58e49e0f4d56cde",
-    "signalhouse-sms/SKILL.md": "e40c5a9da90c2ba75a34de8f5048b2cde3f202f6eb44067352dd32fce8988ce5",
-    "signalhouse-webhooks/SKILL.md": "2b47468bcdc581b32b3697fcaab05b1fd16e279e139c915d83ceed1ce1ddd57f"
+    "signalhouse-10dlc/references/tcr-rejection-causes.md": "312d754c55dfdf8e21d085724728ae4b2288d7b485fba1c61c78f94a42780e8c",
+    "signalhouse-advisor/SKILL.md": "5e5070dc4742a1fe0195989471f809170c30fd7d8f63c33e4778215a2a446146",
+    "signalhouse-numbers/SKILL.md": "f996be53809ea2f90e49b32452f162eeff5369056e1f63e422b8fdb46d2896ff",
+    "signalhouse-setup/SKILL.md": "ca87a6d71f3f82614b83ad283971385fc55c13c097b76595b1b85def235373ec",
+    "signalhouse-sms/SKILL.md": "ec7ed8985ad590b0ab5d40c9ddb003eb8cbc566a1309ac5e330f570e0404ec42",
+    "signalhouse-webhooks/SKILL.md": "d16062e9e0a7cdda3c02aee485bd5114659405d00b1d635da1280db0179490a7"
   }
 }
