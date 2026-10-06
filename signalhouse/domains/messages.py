@@ -21,10 +21,13 @@ class Messages:
         self._sdk = sdk
 
     def estimate_message(self, sender_phone_number: str, recipient_phone_numbers: list[str], message_body: str, *, message_type: str = "SMS", token: str | None = None, headers: dict[str, str] | None = None) -> dict[str, Any]:
-        """Estimate Canadian SMS/MMS retail cost in microdollars; no charge or send.
+        """Estimate Canadian or UK retail cost in microdollars; no charge or send.
 
-        Requires a Ready Canadian sender and Canadian or US recipients, and is unavailable unless Canada is
-        enabled for the environment.
+        A Ready Canadian sender takes SMS or MMS to Canadian or US recipients; a UK (+44) virtual long code
+        takes SMS only to GB mobile recipients (10-15 digits). The response `region` is "CA" or "GB". Unavailable
+        unless that region is enabled for the environment. The sender may also be a READY alphanumeric sender ID
+        (e.g. "ACME"; UK recipients, SMS only); its estimate counts the "\\nOpt out: sihou.io/o/{code}" footer the
+        server appends to every such message.
         """
         return self._sdk._request("/message/estimate", method="POST", body={"senderPhoneNumber": sender_phone_number, "recipientPhoneNumbers": recipient_phone_numbers, "messageBody": message_body, "messageType": message_type}, token=token, headers=headers)
 
@@ -33,6 +36,7 @@ class Messages:
         *,
         id: str | None = None,
         campaign_id: str | None = None,
+        registration_id: str | list[str] | None = None,
         brand_id: str | None = None,
         subgroup_id: str | None = None,
         group_id: str | None = None,
@@ -52,6 +56,8 @@ class Messages:
         page: int | None = None,
         limit: int | None = None,
         channel: str | list[str] | None = None,
+        region: str | list[str] | None = None,
+        region_scopes: str | list[dict[str, Any]] | None = None,
         date_bounds: str | None = None,
         token: str | None = None,
         headers: dict[str, str] | None = None,
@@ -59,6 +65,7 @@ class Messages:
         """Get a list of messages with optional filters and pagination.
 
         Args:
+            registration_id: Filter to messages attributed to these registrations. Cannot be combined with campaign_id; each id must belong to the group. Single value or list.
             id: Filter messages by their unique ID.
             campaign_id: Filter messages by the ID of the associated campaign.
             brand_id: Filter messages by the ID of the associated brand.
@@ -69,6 +76,10 @@ class Messages:
             message_type: Filter by type (SMS, MMS).
             channel: Filter by channel — "tenDLC", "virtualLongCode", "tollFree", "shortCode", or "p2p" (single value or list).
                 Filters on each message's stored channel; older messages without one count as tenDLC.
+            region: Filter by region — "US", "GB", or "CA" (any case of "UK"/"GB"/"GBR"/"United Kingdom" is accepted for GB); single value or list.
+            region_scopes: OR-ed regional branches, each {"region", "channels", "brandId"?, "campaignId"?, "phoneNumber"?}
+                (channels: tenDLC, virtualLongCode, tollFree, shortCode, p2p). A list is JSON-serialised for the query; a
+                string is sent as-is. [] matches nothing.
             carrier: Filter by carrier used for sending.
             sentiment_label: Filter by sentiment bucket — "positive", "neutral", or "negative"
                 (single value or list). Applied as the sentimentScore range the ±25 label threshold
@@ -76,8 +87,12 @@ class Messages:
             error_code: Filter FAILED messages by Signal House error code (single value or list). "OUT" is the
                 campaign opt-out, displayed as RECIPIENT_OPTED_OUT. Carrier codes are not filterable
                 here; they live inside successOrFailureReason.
-            sender_phone_number: Filter by sender phone number.
-            recipient_phone_number: Filter by recipient phone number.
+            sender_phone_number: Filter by sender phone number. A plain value is an exact match; a
+                value containing % is a wildcard for a partial match (e.g. "%1234" matches numbers
+                ending in 1234). 3-15 digits are required alongside any %.
+            recipient_phone_number: Filter by recipient phone number. A plain value is an exact
+                match; a value containing % is a wildcard for a partial match (e.g. "%1234" matches
+                numbers ending in 1234). 3-15 digits are required alongside any %.
             start_date: ISO-8601 date or timestamp; bound per dateBounds: a bare date is always that whole UTC day (inclusive); a timestamp is widened to its whole UTC day in "day" mode and bound as the instant it names, in whatever offset it was written, in "exact" mode.
             end_date: ISO-8601 date or timestamp; bound per dateBounds: a bare date is always that whole UTC day (inclusive); a timestamp is widened to its whole UTC day in "day" mode and bound as the instant it names, in whatever offset it was written, in "exact" mode. In "exact" mode day buckets align to the UTC offset this bound carries, so a client that sends its own midnights gets its own calendar dates back.
             sort_field: The field to sort by (createdAt, segmentCount, status, sentimentScore).
@@ -98,6 +113,7 @@ class Messages:
         query_string = self._sdk._get_query_string({
             "id": id,
             "campaignId": campaign_id,
+            "registrationId": registration_id,
             "brandId": brand_id,
             "subgroupId": subgroup_id,
             "groupId": group_id,
@@ -108,6 +124,8 @@ class Messages:
             "direction": direction,
             "messageType": message_type,
             "channel": channel,
+            "region": region,
+            "regionScopes": json.dumps(region_scopes) if isinstance(region_scopes, list) else region_scopes,
             "carrier": carrier,
             "sentimentLabel": sentiment_label,
             "errorCode": error_code,
@@ -133,12 +151,15 @@ class Messages:
         subgroup_id: str | None = None,
         brand_id: str | None = None,
         campaign_id: str | None = None,
+        registration_id: str | list[str] | None = None,
         phone_number: str | None = None,
         carrier: str | None = None,
         carrier_family: str | list[str] | None = None,
         start_date: str | None = None,
         end_date: str | None = None,
         channel: str | list[str] | None = None,
+        region: str | list[str] | None = None,
+        region_scopes: str | list[dict[str, Any]] | None = None,
         message_type: str | list[str] | None = None,
         date_bounds: str | None = None,
         token: str | None = None,
@@ -151,6 +172,7 @@ class Messages:
             subgroup_id: Filter analytics by subgroup ID.
             brand_id: Filter analytics by brand ID.
             campaign_id: Filter analytics by campaign ID.
+            registration_id: Filter to traffic attributed to these registrations (hourly analytics only; a 400 while hourly reads are off). A phoneNumber filter takes precedence. Single value or list.
             phone_number: Filter analytics by phone number.
             carrier: Filter analytics by carrier.
             carrier_family: Filter analytics by the recipient's resolved carrier family (Default, ATT, TMobile, Verizon, USCellular, GoogleVoice, ClearSky, Interop, RogueMobile, P2P, Standard, IceWireless);
@@ -160,6 +182,11 @@ class Messages:
             channel: Filter by channel — "tenDLC", "virtualLongCode", "tollFree", "shortCode", or "p2p" (single value or list).
                 Filters on the stored channel; a tenDLC selection also includes older messages with
                 no channel, and p2p is matched by carrier.
+            region: Filter by region — "US", "GB", or "CA" (any case of "UK"/"GB"/"GBR"/"United Kingdom" is accepted for GB); single value or list.
+                Only accepted where the environment serves hourly analytics; elsewhere any value is rejected with a 400.
+            region_scopes: OR-ed regional branches, each {"region", "channels", "brandId"?, "campaignId"?, "phoneNumber"?}
+                (channels: tenDLC, virtualLongCode, tollFree, shortCode, p2p). A list is JSON-serialised for the query; a
+                string is sent as-is. [] matches nothing. Same hourly-analytics gate as region.
             message_type: Message type(s) the SENTIMENT figures are scoped to: SMS, MMS or P2P. Omit for all scored types. Does NOT narrow the message counts, which are always returned split per type and have no filterable type dimension.
             date_bounds: Which contract binds start_date/end_date. "day": each bound is widened to its
                 whole UTC day. "exact": a timestamp is bound as the instant
@@ -180,12 +207,15 @@ class Messages:
             "subgroupId": subgroup_id,
             "brandId": brand_id,
             "campaignId": campaign_id,
+            "registrationId": registration_id,
             "phoneNumber": phone_number,
             "carrier": carrier,
             "carrierFamily": carrier_family,
             "startDate": start_date,
             "endDate": end_date,
             "channel": channel,
+            "region": region,
+            "regionScopes": json.dumps(region_scopes) if isinstance(region_scopes, list) else region_scopes,
             "messageType": message_type,
             "dateBounds": date_bounds,
         })
@@ -203,12 +233,15 @@ class Messages:
         subgroup_id: str | None = None,
         brand_id: str | None = None,
         campaign_id: str | None = None,
+        registration_id: str | list[str] | None = None,
         phone_number: str | None = None,
         carrier: str | None = None,
         carrier_family: str | list[str] | None = None,
         start_date: str | None = None,
         end_date: str | None = None,
         channel: str | list[str] | None = None,
+        region: str | list[str] | None = None,
+        region_scopes: str | list[dict[str, Any]] | None = None,
         message_type: str | list[str] | None = None,
         granularity: str | None = None,
         breakdown: str | None = None,
@@ -223,6 +256,7 @@ class Messages:
             subgroup_id: Filter analytics by subgroup ID.
             brand_id: Filter analytics by brand ID.
             campaign_id: Filter analytics by campaign ID.
+            registration_id: Filter to traffic attributed to these registrations (hourly analytics only; a 400 while hourly reads are off). A phoneNumber filter takes precedence. Single value or list.
             phone_number: Filter analytics by phone number.
             carrier: Filter analytics by carrier.
             carrier_family: Filter analytics by the recipient's resolved carrier family (Default, ATT, TMobile, Verizon, USCellular, GoogleVoice, ClearSky, Interop, RogueMobile, P2P, Standard, IceWireless);
@@ -232,6 +266,11 @@ class Messages:
             channel: Filter by channel — "tenDLC", "virtualLongCode", "tollFree", "shortCode", or "p2p" (single value or list).
                 Filters on the stored channel; a tenDLC selection also includes older messages with
                 no channel, and p2p is a real channel here.
+            region: Filter by region — "US", "GB", or "CA" (any case of "UK"/"GB"/"GBR"/"United Kingdom" is accepted for GB); single value or list.
+                Only accepted where the environment serves hourly analytics; elsewhere any value is rejected with a 400.
+            region_scopes: OR-ed regional branches, each {"region", "channels", "brandId"?, "campaignId"?, "phoneNumber"?}
+                (channels: tenDLC, virtualLongCode, tollFree, shortCode, p2p). A list is JSON-serialised for the query; a
+                string is sent as-is. [] matches nothing. Same hourly-analytics gate as region.
             message_type: Message type(s) the SENTIMENT figures are scoped to: SMS, MMS or P2P. Omit for all scored types. Does NOT narrow the message counts, which are always returned split per type and have no filterable type dimension.
             granularity: Time-bucket grain of the byDate rows: "day" or "hour". Omit for day (each row's
                 _id is a "YYYY-MM-DD" date). "hour" buckets by hour (each row's _id is a
@@ -261,12 +300,15 @@ class Messages:
             "subgroupId": subgroup_id,
             "brandId": brand_id,
             "campaignId": campaign_id,
+            "registrationId": registration_id,
             "phoneNumber": phone_number,
             "carrier": carrier,
             "carrierFamily": carrier_family,
             "startDate": start_date,
             "endDate": end_date,
             "channel": channel,
+            "region": region,
+            "regionScopes": json.dumps(region_scopes) if isinstance(region_scopes, list) else region_scopes,
             "messageType": message_type,
             "granularity": granularity,
             "breakdown": breakdown,
@@ -285,6 +327,7 @@ class Messages:
         group_id: str,
         brand_id: str | list[str] | None = None,
         campaign_id: str | list[str] | None = None,
+        registration_id: str | list[str] | None = None,
         carrier_family: str | list[str] | None = None,
         start_date: str,
         end_date: str,
@@ -305,6 +348,7 @@ class Messages:
             group_id: The group to scope the read to.
             brand_id: Brand scope (single value or list).
             campaign_id: Campaign scope; wins over brand_id (single value or list).
+            registration_id: Filter to traffic attributed to these registrations (hourly analytics only; a 400 while hourly reads are off). Single value or list.
             carrier_family: Carrier-family filter (ATT, TMobile, Verizon, USCellular, ...); single value or list.
             start_date: ISO-8601 date or timestamp. bound per dateBounds: a bare date is always that whole UTC day (inclusive); a timestamp is widened to its whole UTC day in "day" mode and bound as the instant it names, in whatever offset it was written, in "exact" mode, then
                 floored to the start of its hour at hour granularity and of its minute at day granularity
@@ -332,6 +376,7 @@ class Messages:
             "groupId": group_id,
             "brandId": brand_id,
             "campaignId": campaign_id,
+            "registrationId": registration_id,
             "carrierFamily": carrier_family,
             "startDate": start_date,
             "endDate": end_date,
@@ -350,6 +395,7 @@ class Messages:
         self,
         *,
         group_id: str,
+        region: str | list[str] | None = None,
         token: str | None = None,
         headers: dict[str, str] | None = None,
     ) -> dict[str, Any]:
@@ -359,14 +405,20 @@ class Messages:
 
         Args:
             group_id: The ID of the group whose filter options to load.
+            region: Restrict the options to one region — "US", "GB", or "CA" (any case of "UK"/"GB"/"GBR"/"United Kingdom" is accepted for GB); single value or
+                list. Only accepted where the environment serves hourly analytics; elsewhere any value is rejected with a 400.
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
 
         Returns:
             Standardized response dict with subgroups, brands, campaigns, and phoneNumbers arrays.
+            Each phone number carries type (TOLL_FREE, SHORT_CODE, ALPHANUMERIC, VIRTUAL_LONG_NUMBER, ...) and
+            country (ISO-2), None when unknown: TOLL_FREE, SHORT_CODE and ALPHANUMERIC are channels by type; any
+            other US number is 10DLC and a non-US one is a Virtual Long Code.
         """
         query_string = self._sdk._get_query_string({
             "groupId": group_id,
+            "region": region,
         })
         return self._sdk._request(
             f"/message/analytics/filter-options{query_string}",
@@ -382,6 +434,7 @@ class Messages:
         subgroup_id: str | list[str] | None = None,
         brand_id: str | list[str] | None = None,
         campaign_id: str | list[str] | None = None,
+        registration_id: str | list[str] | None = None,
         phone_number: str | list[str] | None = None,
         carrier: str | list[str] | None = None,
         carrier_family: str | list[str] | None = None,
@@ -390,6 +443,8 @@ class Messages:
         page: int | None = None,
         limit: int | None = None,
         channel: str | list[str] | None = None,
+        region: str | list[str] | None = None,
+        region_scopes: str | list[dict[str, Any]] | None = None,
         message_type: str | list[str] | None = None,
         date_bounds: str | None = None,
         token: str | None = None,
@@ -401,6 +456,7 @@ class Messages:
         callers can apply channel toggles client-side.
 
         Args:
+            registration_id: Filter to traffic attributed to these registrations (hourly analytics only; a 400 while hourly reads are off). A phoneNumber filter takes precedence. Single value or list.
             carrier_family: Filter analytics by the recipient's resolved carrier family (Default, ATT, TMobile, Verizon, USCellular, GoogleVoice, ClearSky, Interop, RogueMobile, P2P, Standard, IceWireless);
                 single value or list. Only accepted where the environment serves hourly analytics; elsewhere any value is rejected with a 400 -- omit the parameter unless it is wanted.
             page: Page number (default 1).
@@ -409,6 +465,11 @@ class Messages:
                 or list). Scopes the ORDER BY + row inclusion by the stored channel column so a
                 single-channel caller doesn't get pages dominated by other channels; toll-free is
                 kept separate from 10DLC.
+            region: Filter by region — "US", "GB", or "CA" (any case of "UK"/"GB"/"GBR"/"United Kingdom" is accepted for GB); single value or list.
+                Only accepted where the environment serves hourly analytics; elsewhere any value is rejected with a 400.
+            region_scopes: OR-ed regional branches, each {"region", "channels", "brandId"?, "campaignId"?, "phoneNumber"?}
+                (channels: tenDLC, virtualLongCode, tollFree, shortCode, p2p). A list is JSON-serialised for the query; a
+                string is sent as-is. [] matches nothing. Same hourly-analytics gate as region.
             message_type: Message type(s) the SENTIMENT figures are scoped to: SMS, MMS or P2P
                 (single value or list). Omit for all scored types. Does NOT narrow the message
                 counts, which are always returned split per type and have no filterable type
@@ -432,6 +493,7 @@ class Messages:
             "subgroupId": subgroup_id,
             "brandId": brand_id,
             "campaignId": campaign_id,
+            "registrationId": registration_id,
             "phoneNumber": phone_number,
             "carrier": carrier,
             "carrierFamily": carrier_family,
@@ -440,6 +502,8 @@ class Messages:
             "page": page,
             "limit": limit,
             "channel": channel,
+            "region": region,
+            "regionScopes": json.dumps(region_scopes) if isinstance(region_scopes, list) else region_scopes,
             "messageType": message_type,
             "dateBounds": date_bounds,
         })
@@ -457,6 +521,7 @@ class Messages:
         subgroup_id: str | list[str] | None = None,
         brand_id: str | list[str] | None = None,
         campaign_id: str | list[str] | None = None,
+        registration_id: str | list[str] | None = None,
         phone_number: str | list[str] | None = None,
         carrier: str | list[str] | None = None,
         carrier_family: str | list[str] | None = None,
@@ -465,6 +530,8 @@ class Messages:
         page: int | None = None,
         limit: int | None = None,
         channel: str | list[str] | None = None,
+        region: str | list[str] | None = None,
+        region_scopes: str | list[dict[str, Any]] | None = None,
         date_bounds: str | None = None,
         token: str | None = None,
         headers: dict[str, str] | None = None,
@@ -473,6 +540,7 @@ class Messages:
         contains per-channel (sms/mms/p2p) error counts plus an enriched description.
 
         Args:
+            registration_id: Filter to traffic attributed to these registrations (hourly analytics only; a 400 while hourly reads are off). A phoneNumber filter takes precedence. Single value or list.
             carrier_family: Filter analytics by the recipient's resolved carrier family (Default, ATT, TMobile, Verizon, USCellular, GoogleVoice, ClearSky, Interop, RogueMobile, P2P, Standard, IceWireless);
                 single value or list. Only accepted where the environment serves hourly analytics; elsewhere any value is rejected with a 400 -- omit the parameter unless it is wanted.
             page: Page number (default 1).
@@ -480,6 +548,11 @@ class Messages:
             channel: "both" (default, every code) or "tenDLC" / "virtualLongCode" / "tollFree" / "shortCode" / "p2p" (single value
                 or list). Scopes the ORDER BY + totalCount by the stored channel column; when one
                 channel is selected, totalErrors reflects only that channel.
+            region: Filter by region — "US", "GB", or "CA" (any case of "UK"/"GB"/"GBR"/"United Kingdom" is accepted for GB); single value or list.
+                Only accepted where the environment serves hourly analytics; elsewhere any value is rejected with a 400.
+            region_scopes: OR-ed regional branches, each {"region", "channels", "brandId"?, "campaignId"?, "phoneNumber"?}
+                (channels: tenDLC, virtualLongCode, tollFree, shortCode, p2p). A list is JSON-serialised for the query; a
+                string is sent as-is. [] matches nothing. Same hourly-analytics gate as region.
             date_bounds: Which contract binds start_date/end_date. "day": each bound is widened to its
                 whole UTC day. "exact": a timestamp is bound as the instant
                 it names and a bare date is its whole UTC day. Omitted: "day".
@@ -492,6 +565,7 @@ class Messages:
             "subgroupId": subgroup_id,
             "brandId": brand_id,
             "campaignId": campaign_id,
+            "registrationId": registration_id,
             "phoneNumber": phone_number,
             "carrier": carrier,
             "carrierFamily": carrier_family,
@@ -500,6 +574,8 @@ class Messages:
             "page": page,
             "limit": limit,
             "channel": channel,
+            "region": region,
+            "regionScopes": json.dumps(region_scopes) if isinstance(region_scopes, list) else region_scopes,
             "dateBounds": date_bounds,
         })
         return self._sdk._request(
@@ -516,11 +592,14 @@ class Messages:
         subgroup_id: str | None = None,
         brand_id: str | None = None,
         campaign_id: str | None = None,
+        registration_id: str | list[str] | None = None,
         phone_number: str | None = None,
         carrier: str | None = None,
         start_date: str | None = None,
         end_date: str | None = None,
         channel: str | list[str] | None = None,
+        region: str | list[str] | None = None,
+        region_scopes: str | list[dict[str, Any]] | None = None,
         date_bounds: str | None = None,
         token: str | None = None,
         headers: dict[str, str] | None = None,
@@ -539,6 +618,7 @@ class Messages:
             subgroup_id: Filter by subgroup ID.
             brand_id: Filter by brand ID.
             campaign_id: Filter by campaign ID.
+            registration_id: Filter to traffic attributed to these registrations (hourly analytics only; a 400 while hourly reads are off). A phoneNumber filter takes precedence. Single value or list.
             phone_number: Filter by phone number.
             carrier: Filter by carrier.
             start_date: ISO-8601 date or timestamp; bound per dateBounds: a bare date is always that whole UTC day (inclusive); a timestamp is widened to its whole UTC day in "day" mode and bound as the instant it names, in whatever offset it was written, in "exact" mode.
@@ -546,6 +626,11 @@ class Messages:
             channel: Filter by channel — "tenDLC", "virtualLongCode", "tollFree", or "shortCode" (single value or list). Opt-outs are
                 A2P-only, so "p2p" applies no filter. A tenDLC selection also includes older opt-outs
                 with no channel.
+            region: Filter by region — "US", "GB", or "CA" (any case of "UK"/"GB"/"GBR"/"United Kingdom" is accepted for GB); single value or list.
+                Only accepted where the environment serves hourly analytics; elsewhere any value is rejected with a 400.
+            region_scopes: OR-ed regional branches, each {"region", "channels", "brandId"?, "campaignId"?, "phoneNumber"?}
+                (channels: tenDLC, virtualLongCode, tollFree, shortCode, p2p). A list is JSON-serialised for the query; a
+                string is sent as-is. [] matches nothing. Same hourly-analytics gate as region.
             date_bounds: Which contract binds start_date/end_date. "day": each bound is widened to its
                 whole UTC day. "exact": a timestamp is bound as the instant
                 it names and a bare date is its whole UTC day. Omitted: "day".
@@ -565,11 +650,14 @@ class Messages:
             "subgroupId": subgroup_id,
             "brandId": brand_id,
             "campaignId": campaign_id,
+            "registrationId": registration_id,
             "phoneNumber": phone_number,
             "carrier": carrier,
             "startDate": start_date,
             "endDate": end_date,
             "channel": channel,
+            "region": region,
+            "regionScopes": json.dumps(region_scopes) if isinstance(region_scopes, list) else region_scopes,
             "dateBounds": date_bounds,
         })
         return self._sdk._request(
@@ -586,6 +674,7 @@ class Messages:
         subgroup_id: str | None = None,
         brand_id: str | None = None,
         campaign_id: str | None = None,
+        registration_id: str | list[str] | None = None,
         phone_number: str | None = None,
         carrier: str | None = None,
         start_date: str | None = None,
@@ -595,6 +684,8 @@ class Messages:
         sort_field: str | None = None,
         sort_order: str | None = None,
         channel: str | list[str] | None = None,
+        region: str | list[str] | None = None,
+        region_scopes: str | list[dict[str, Any]] | None = None,
         date_bounds: str | None = None,
         token: str | None = None,
         headers: dict[str, str] | None = None,
@@ -602,6 +693,7 @@ class Messages:
         """Get paginated Do Not Call records with optional filters.
 
         Args:
+            registration_id: Filter to traffic attributed to these registrations (hourly analytics only; a 400 while hourly reads are off). A phoneNumber filter takes precedence. Single value or list.
             group_id: Filter by group ID.
             subgroup_id: Filter by subgroup ID.
             brand_id: Filter by brand ID.
@@ -617,6 +709,11 @@ class Messages:
             channel: Filter by channel — "tenDLC", "virtualLongCode", "tollFree", or "shortCode" (single value or list). Opt-outs are
                 A2P-only, so "p2p" applies no filter. A tenDLC selection also includes older opt-outs
                 with no channel.
+            region: Filter by region — "US", "GB", or "CA" (any case of "UK"/"GB"/"GBR"/"United Kingdom" is accepted for GB); single value or list.
+                Only accepted where the environment serves hourly analytics; elsewhere any value is rejected with a 400.
+            region_scopes: OR-ed regional branches, each {"region", "channels", "brandId"?, "campaignId"?, "phoneNumber"?}
+                (channels: tenDLC, virtualLongCode, tollFree, shortCode, p2p). A list is JSON-serialised for the query; a
+                string is sent as-is. [] matches nothing. Same hourly-analytics gate as region.
             date_bounds: Which contract binds start_date/end_date. "day": each bound is widened to its
                 whole UTC day. "exact": a timestamp is bound as the instant
                 it names and a bare date is its whole UTC day. Omitted: "day".
@@ -640,6 +737,7 @@ class Messages:
             "subgroupId": subgroup_id,
             "brandId": brand_id,
             "campaignId": campaign_id,
+            "registrationId": registration_id,
             "phoneNumber": phone_number,
             "carrier": carrier,
             "startDate": start_date,
@@ -649,6 +747,8 @@ class Messages:
             "sortField": sort_field,
             "sortOrder": sort_order,
             "channel": channel,
+            "region": region,
+            "regionScopes": json.dumps(region_scopes) if isinstance(region_scopes, list) else region_scopes,
             "dateBounds": date_bounds,
         })
         return self._sdk._request(
@@ -674,7 +774,10 @@ class Messages:
 
         Args:
             sender_phone_number: The digits-only 5-6 digit Short Code or 10+ digit
-                long number to send the message from.
+                long number to send the message from, or a READY alphanumeric sender
+                ID (e.g. "ACME"; UK recipients and SMS only). Every message from an
+                alphanumeric sender gets "\\nOpt out: sihou.io/o/{code}" appended by
+                the server, counted in segments.
             recipient_phone_numbers: The 10+ digit phone number(s) to send the
                 message to. A Short Code sender permits exactly one recipient,
                 and it must be a +1 (US/Canada) number; a bare 10-digit number

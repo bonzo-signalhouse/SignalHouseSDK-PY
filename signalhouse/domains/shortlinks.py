@@ -44,6 +44,66 @@ class Shortlinks:
             headers=headers,
         )
 
+    def get_opt_out(
+        self,
+        code: str,
+        *,
+        token: str | None = None,
+        headers: dict[str, str] | None = None,
+    ) -> dict[str, Any]:
+        """Get the recipient opt-out details behind an alphanumeric-sender opt-out link.
+
+        Args:
+            code: The opt-out code from the sihou.io/o/{code} link.
+            token: Optional bearer token for authentication.
+            headers: Additional headers to include in the request.
+
+        Returns:
+            Standardized response dict; data is
+            ``{code, senderName, maskedRecipient, optedOut}``.
+
+        Raises:
+            SignalHouseValidationError: If code is missing.
+        """
+        self._sdk._require({"code": code})
+        safe_code = quote(str(code), safe="")
+        return self._sdk._request(
+            f"/shortlink/optout/{safe_code}",
+            method="GET",
+            token=token,
+            headers=headers,
+        )
+
+    def confirm_opt_out(
+        self,
+        code: str,
+        *,
+        token: str | None = None,
+        headers: dict[str, str] | None = None,
+    ) -> dict[str, Any]:
+        """Confirm the recipient opt-out behind an alphanumeric-sender opt-out link; idempotent.
+
+        Args:
+            code: The opt-out code from the sihou.io/o/{code} link.
+            token: Optional bearer token for authentication.
+            headers: Additional headers to include in the request.
+
+        Returns:
+            Standardized response dict; data is
+            ``{code, senderName, maskedRecipient, optedOut: True}``.
+
+        Raises:
+            SignalHouseValidationError: If code is missing.
+        """
+        self._sdk._require({"code": code})
+        safe_code = quote(str(code), safe="")
+        return self._sdk._request(
+            f"/shortlink/optout/{safe_code}",
+            method="POST",
+            token=token,
+            headers=headers,
+        )
+
     def get_shortlink(
         self,
         *,

@@ -19,6 +19,7 @@ from .domains.landings import Landings
 from .domains.messages import Messages
 from .domains.notifications import Notifications
 from .domains.numbers import Numbers
+from .domains.registrations import Registrations
 from .domains.onboarding import Onboarding
 from .domains.shortlinks import Shortlinks
 from .domains.subgroups import Subgroups
@@ -73,6 +74,7 @@ class SignalHouseSDK:
         self.messages = Messages(self)
         self.notifications = Notifications(self)
         self.numbers = Numbers(self)
+        self.registrations = Registrations(self)
         self.onboarding = Onboarding(self)
         self.shortlinks = Shortlinks(self)
         self.subgroups = Subgroups(self)

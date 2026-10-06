@@ -132,8 +132,12 @@ class Agents:
                 groupId (str, starts with 'G') and name (str). Optional fields:
                 subgroupId (str, starts with 'S', null = group-level agent),
                 status ("active" | "inactive", defaults to "active"), systemPrompt,
-                greeting, and guardrails. Model, voice and sampling settings are
-                per-channel and live on the channel setting, not here.
+                greeting, guardrails, and sendAuthority ("review" | "autopilot",
+                defaults to "review"; deployments may override it per subgroup).
+                publishStatus and publishedAt are read-only and change only through
+                publish_agent_profile and unpublish_agent_profile. Model, voice and
+                sampling settings are per-channel and live on the channel setting,
+                not here.
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
 
@@ -169,8 +173,11 @@ class Agents:
             update_data: The fields to update. All create fields are accepted except
                 groupId and subgroupId — the agent's scope is immutable. Updatable
                 fields: name, status ("active" | "inactive"), systemPrompt, greeting,
-                and guardrails. Model, voice and sampling settings are per-channel and
-                live on the channel setting, not here.
+                guardrails, and sendAuthority ("review" | "autopilot"). publishStatus
+                and publishedAt are read-only and change only through
+                publish_agent_profile and unpublish_agent_profile. Model, voice and
+                sampling settings are per-channel and live on the channel setting,
+                not here.
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
 
@@ -600,6 +607,181 @@ class Agents:
         return self._sdk._request(
             f"/agent/profiles/{safe_id}/channels/{safe_channel}",
             method="DELETE",
+            token=token,
+            headers=headers,
+        )
+
+    def get_agent_deployments(
+        self,
+        agent_profile_id: str,
+        *,
+        token: str | None = None,
+        headers: dict[str, str] | None = None,
+    ) -> dict[str, Any]:
+        """List a group-level agent's deployments to subgroups.
+
+        Allowed roles: api, admin, developer, billing, user.
+
+        Args:
+            agent_profile_id: The agent whose deployments to list.
+            token: Optional bearer token for authentication.
+            headers: Additional headers to include in the request.
+
+        Returns:
+            Standardized response dict. Each deployment carries agentDeploymentId,
+            groupId, subgroupId, agentProfileId, sendAuthorityOverride,
+            sendAuthorityChangedBy, sendAuthorityChangedAt, enabled, createdAt,
+            and updatedAt.
+
+        Raises:
+            SignalHouseValidationError: If agent_profile_id is missing.
+        """
+        self._sdk._require({"agentProfileId": agent_profile_id})
+        safe_id = quote(str(agent_profile_id), safe="")
+        return self._sdk._request(
+            f"/agent/profiles/{safe_id}/deployments",
+            method="GET",
+            token=token,
+            headers=headers,
+        )
+
+    def upsert_agent_deployment(
+        self,
+        agent_profile_id: str,
+        subgroup_id: str,
+        deployment_data: dict[str, Any] | None = None,
+        *,
+        token: str | None = None,
+        headers: dict[str, str] | None = None,
+    ) -> dict[str, Any]:
+        """Deploy a group-level agent to a subgroup, or change that deployment (upsert).
+
+        One row per (agent, subgroup); the subgroup comes from the path.
+
+        Allowed roles: api, admin, developer.
+
+        Args:
+            agent_profile_id: The agent to deploy.
+            subgroup_id: The subgroup to deploy to (starts with 'S').
+            deployment_data: Fields to set: sendAuthorityOverride ("review" |
+                "autopilot" | None; None clears the override so the deployment
+                inherits the profile default) and enabled (bool, defaults to True).
+            token: Optional bearer token for authentication.
+            headers: Additional headers to include in the request.
+
+        Returns:
+            Standardized response dict with the created or updated deployment.
+
+        Raises:
+            SignalHouseValidationError: If agent_profile_id or subgroup_id is missing.
+        """
+        self._sdk._require({"agentProfileId": agent_profile_id, "subgroupId": subgroup_id})
+        safe_id = quote(str(agent_profile_id), safe="")
+        safe_subgroup_id = quote(str(subgroup_id), safe="")
+        return self._sdk._request(
+            f"/agent/profiles/{safe_id}/deployments/{safe_subgroup_id}",
+            method="PUT",
+            body=deployment_data or {},
+            token=token,
+            headers=headers,
+        )
+
+    def delete_agent_deployment(
+        self,
+        agent_profile_id: str,
+        subgroup_id: str,
+        *,
+        token: str | None = None,
+        headers: dict[str, str] | None = None,
+    ) -> dict[str, Any]:
+        """Remove an agent's deployment from a subgroup.
+
+        Allowed roles: api, admin, developer.
+
+        Args:
+            agent_profile_id: The deployed agent.
+            subgroup_id: The subgroup to remove the deployment from.
+            token: Optional bearer token for authentication.
+            headers: Additional headers to include in the request.
+
+        Returns:
+            Standardized response dict with the removed deployment.
+
+        Raises:
+            SignalHouseValidationError: If agent_profile_id or subgroup_id is missing.
+        """
+        self._sdk._require({"agentProfileId": agent_profile_id, "subgroupId": subgroup_id})
+        safe_id = quote(str(agent_profile_id), safe="")
+        safe_subgroup_id = quote(str(subgroup_id), safe="")
+        return self._sdk._request(
+            f"/agent/profiles/{safe_id}/deployments/{safe_subgroup_id}",
+            method="DELETE",
+            token=token,
+            headers=headers,
+        )
+
+    def publish_agent_profile(
+        self,
+        agent_profile_id: str,
+        *,
+        token: str | None = None,
+        headers: dict[str, str] | None = None,
+    ) -> dict[str, Any]:
+        """Publish an agent profile.
+
+        Sets publishStatus to "published" and stamps publishedAt. The server
+        rejects the call with 400 when the agent has no enabled deployment, and
+        with 409 when the agent is inactive.
+
+        Allowed roles: api, admin, developer.
+
+        Args:
+            agent_profile_id: The agent profile to publish.
+            token: Optional bearer token for authentication.
+            headers: Additional headers to include in the request.
+
+        Returns:
+            Standardized response dict with the published agent profile.
+
+        Raises:
+            SignalHouseValidationError: If agent_profile_id is missing.
+        """
+        self._sdk._require({"agentProfileId": agent_profile_id})
+        safe_id = quote(str(agent_profile_id), safe="")
+        return self._sdk._request(
+            f"/agent/profiles/{safe_id}/publish",
+            method="POST",
+            token=token,
+            headers=headers,
+        )
+
+    def unpublish_agent_profile(
+        self,
+        agent_profile_id: str,
+        *,
+        token: str | None = None,
+        headers: dict[str, str] | None = None,
+    ) -> dict[str, Any]:
+        """Return an agent profile to draft (publishStatus "draft").
+
+        Allowed roles: api, admin, developer.
+
+        Args:
+            agent_profile_id: The agent profile to unpublish.
+            token: Optional bearer token for authentication.
+            headers: Additional headers to include in the request.
+
+        Returns:
+            Standardized response dict with the unpublished agent profile.
+
+        Raises:
+            SignalHouseValidationError: If agent_profile_id is missing.
+        """
+        self._sdk._require({"agentProfileId": agent_profile_id})
+        safe_id = quote(str(agent_profile_id), safe="")
+        return self._sdk._request(
+            f"/agent/profiles/{safe_id}/unpublish",
+            method="POST",
             token=token,
             headers=headers,
         )

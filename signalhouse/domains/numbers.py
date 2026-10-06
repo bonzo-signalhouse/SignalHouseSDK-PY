@@ -105,6 +105,7 @@ class Numbers:
         *,
         phone_number: str | None = None,
         campaign_id: str | None = None,
+        registration_id: str | None = None,
         brand_id: str | None = None,
         subgroup_id: str | None = None,
         group_id: str | None = None,
@@ -118,6 +119,7 @@ class Numbers:
         Args:
             phone_number: Filter by phone number (partial match).
             campaign_id: Filter by campaign ID.
+            registration_id: Filter to numbers provisioned under this registration.
             brand_id: Filter by brand ID.
             subgroup_id: Filter by subgroup ID.
             group_id: Filter by group ID.
@@ -149,6 +151,7 @@ class Numbers:
         query_string = self._sdk._get_query_string({
             "phoneNumber": phone_number,
             "campaignId": campaign_id,
+            "registrationId": registration_id,
             "brandId": brand_id,
             "subgroupId": subgroup_id,
             "groupId": group_id,
