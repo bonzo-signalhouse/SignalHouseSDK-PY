@@ -33,6 +33,7 @@ class Analytics:
         carrier: str | None = None,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Get aggregated voice analytics for the current account.
         ``GET /voice/stats/voice-analytics``.
@@ -58,6 +59,7 @@ class Analytics:
             carrier: Filter by carrier.
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict wrapping ``{ success, range: { dateFrom,
@@ -80,4 +82,5 @@ class Analytics:
             method="GET",
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )

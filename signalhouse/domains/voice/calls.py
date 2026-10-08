@@ -36,6 +36,7 @@ class Calls:
         *,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Create an outbound call. ``POST /voice/v1/calls``.
 
@@ -53,7 +54,7 @@ class Calls:
         """
         self._sdk._require({"callData": call_data})
         return self._sdk._request(
-            "/voice/v1/calls", method="POST", body=call_data, token=token, headers=headers,
+            "/voice/v1/calls", method="POST", body=call_data, token=token, headers=headers, idempotency_key=idempotency_key,
         )
 
     def list(
@@ -69,6 +70,7 @@ class Calls:
         date_to: str | None = None,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """List call logs for the current account, paginated and filterable.
         ``GET /voice/v1/calls``.
@@ -87,6 +89,7 @@ class Calls:
             date_to: ISO-8601 upper bound on ``start_time``.
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict wrapping ``{ calls, total, page, limit }``.
@@ -106,6 +109,7 @@ class Calls:
             method="GET",
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
 
     def get(
@@ -114,6 +118,7 @@ class Calls:
         *,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Get a single call log by ID. ``GET /voice/v1/calls/:id``.
 
@@ -123,7 +128,7 @@ class Calls:
         self._sdk._require({"id": id})
         safe_id = quote(str(id), safe="")
         return self._sdk._request(
-            f"/voice/v1/calls/{safe_id}", method="GET", token=token, headers=headers,
+            f"/voice/v1/calls/{safe_id}", method="GET", token=token, headers=headers, idempotency_key=idempotency_key,
         )
 
     def hangup(
@@ -133,6 +138,7 @@ class Calls:
         reason: str | None = None,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Hang up an in-progress call. ``POST /voice/v1/calls/:id/hangup``.
 
@@ -149,4 +155,5 @@ class Calls:
             body=body,
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )

@@ -23,6 +23,7 @@ class RegistrationsAdmin:
         *,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Approve or reject a registration awaiting Signal House review.
 
@@ -32,6 +33,7 @@ class RegistrationsAdmin:
             reason: Why the registration was rejected; required for "REJECT".
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict.
@@ -50,6 +52,7 @@ class RegistrationsAdmin:
             body=body,
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
 
     def correct_registration(
@@ -60,6 +63,7 @@ class RegistrationsAdmin:
         *,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Save corrections for a registration the provider sent back for more information.
 
@@ -70,6 +74,7 @@ class RegistrationsAdmin:
                 Owner, quantity, capabilities and the provider order are fixed.
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict.
@@ -85,6 +90,7 @@ class RegistrationsAdmin:
             body={"reason": reason, "data": data},
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
 
     def add_number(
@@ -94,6 +100,7 @@ class RegistrationsAdmin:
         *,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Allocate a provider-owned number to a registration through the staff recovery path.
 
@@ -102,6 +109,7 @@ class RegistrationsAdmin:
             phone_number: The allocated number in E.164 digits (10-15 digits, optional leading +).
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict.
@@ -117,6 +125,7 @@ class RegistrationsAdmin:
             body={"phoneNumber": phone_number},
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
 
     def reconcile(
@@ -126,6 +135,7 @@ class RegistrationsAdmin:
         *,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Link a RECONCILIATION_REQUIRED registration to the provider order that was actually placed.
 
@@ -136,6 +146,7 @@ class RegistrationsAdmin:
             external_id: The provider's identifier for the existing order.
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict.
@@ -151,6 +162,7 @@ class RegistrationsAdmin:
             body={"externalId": external_id},
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
 
     def get_application(
@@ -159,6 +171,7 @@ class RegistrationsAdmin:
         *,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Get the completed carrier application as {filename, contentType, base64}; decode base64 to save the file.
 
@@ -166,6 +179,7 @@ class RegistrationsAdmin:
             registration_id: The ID of the registration whose application to download.
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict.
@@ -180,6 +194,7 @@ class RegistrationsAdmin:
             method="GET",
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
 
 
@@ -198,6 +213,7 @@ class Registrations:
         *,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Get the registration types a jurisdiction offers and whether each can be acquired right now.
 
@@ -205,6 +221,7 @@ class Registrations:
             region: The jurisdiction (US, GB, CA, AU; any case of "UK"/"GB"/"GBR"/"United Kingdom" is accepted for GB).
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict whose data is {region, jurisdiction, sendingRequiresRegistration, registeredThrough,
@@ -221,6 +238,7 @@ class Registrations:
             method="GET",
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
 
     def get_quotes(
@@ -232,6 +250,7 @@ class Registrations:
         group_id: str | None = None,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Get setup and monthly prices, in integer microdollars, for each capability bundle of a type.
 
@@ -243,6 +262,7 @@ class Registrations:
             group_id: Staff only — quote on behalf of another group.
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict whose data is a list of quotes, one per capability bundle:
@@ -264,6 +284,7 @@ class Registrations:
             method="GET",
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
 
     def get_registrations(
@@ -283,6 +304,7 @@ class Registrations:
         limit: int | None = None,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Get a list of registrations with optional filters and pagination.
 
@@ -303,6 +325,7 @@ class Registrations:
             limit: The number of items per page (max 100).
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict with data, totalCount, page, and limit.
@@ -326,6 +349,7 @@ class Registrations:
             method="GET",
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
 
     def get_registration(
@@ -334,6 +358,7 @@ class Registrations:
         *,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Get a single registration with its type data, review outcome and status history.
 
@@ -341,6 +366,7 @@ class Registrations:
             registration_id: The ID of the registration to retrieve.
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict.
@@ -355,6 +381,7 @@ class Registrations:
             method="GET",
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
 
     def cancel_registration(
@@ -363,6 +390,7 @@ class Registrations:
         *,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Cancel a registration.
 
@@ -373,6 +401,7 @@ class Registrations:
             registration_id: The ID of the registration to cancel.
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict with the cancelled registration.
@@ -387,6 +416,7 @@ class Registrations:
             method="DELETE",
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
 
     def create_registration(
@@ -395,11 +425,12 @@ class Registrations:
         *,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Submit a registration for Signal House review.
 
         Args:
-            registration_data: {"region", "type", "subgroupId", "clientRequestId" (UUID), "capabilities"
+            registration_data: {"region", "type", "subgroupId", "capabilities"
                 (one of the type's bundles), "data"}. The type selects the data shape; for VIRTUAL_LONG_CODE it is
                 {"quantity" (1-100), "useCases" (1-10), "voice"? (required exactly when capabilities include VOICE)}.
                 For GB ALPHANUMERIC_SENDER_ID (capabilities ["SMS"]) it is {"requestedSenderId" (3-11 letters/digits/
@@ -407,9 +438,10 @@ class Registrations:
                 (TRANSACTIONAL | PROMOTIONAL), "companyName", "companyCountry", "companyWebsite", "industry",
                 "messageExample", "senderRelationship"? (required when requestedSenderId differs from companyName)};
                 quantity is always 1 and data.phoneNumbers carries the granted sender (e.g. ["ACME"]) once APPROVED.
-                Reuse a clientRequestId only to retry an identical submission (409 otherwise).
+                Pass idempotency_key to make a retry safe.
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict (HTTP 201) containing the new registration.
@@ -424,4 +456,5 @@ class Registrations:
             body=registration_data,
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )

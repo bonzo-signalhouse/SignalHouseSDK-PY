@@ -21,6 +21,7 @@ class SubscriptionsAdmin:
         template_id: str | None = None,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Get subscription templates with optional filtering by template ID.
 
@@ -28,6 +29,7 @@ class SubscriptionsAdmin:
             template_id: The ID of a specific template to retrieve.
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict.
@@ -38,6 +40,7 @@ class SubscriptionsAdmin:
             method="GET",
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
 
     def create_template(
@@ -46,6 +49,7 @@ class SubscriptionsAdmin:
         *,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Create a new subscription template.
 
@@ -53,6 +57,7 @@ class SubscriptionsAdmin:
             template_data: The data for the new template, including templateName and monthlyFee.
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict.
@@ -67,6 +72,7 @@ class SubscriptionsAdmin:
             body=template_data,
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
 
     def update_template(
@@ -76,6 +82,7 @@ class SubscriptionsAdmin:
         *,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Update an existing subscription template.
 
@@ -84,6 +91,7 @@ class SubscriptionsAdmin:
             template_data: The data for the template, including templateName and monthlyFee.
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict.
@@ -99,6 +107,7 @@ class SubscriptionsAdmin:
             body=template_data,
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
 
     def delete_template(
@@ -107,6 +116,7 @@ class SubscriptionsAdmin:
         *,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Delete an existing subscription template.
 
@@ -114,6 +124,7 @@ class SubscriptionsAdmin:
             template_id: The ID of the subscription template to delete.
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict.
@@ -128,6 +139,7 @@ class SubscriptionsAdmin:
             method="DELETE",
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
 
     def create_custom_subscription(
@@ -137,6 +149,7 @@ class SubscriptionsAdmin:
         *,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Create a custom subscription for a group.
 
@@ -145,6 +158,7 @@ class SubscriptionsAdmin:
             subscription_data: The data for the custom subscription.
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict.
@@ -160,6 +174,7 @@ class SubscriptionsAdmin:
             body=subscription_data,
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
 
 
@@ -179,6 +194,7 @@ class Subscriptions:
         only_active: bool | None = None,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Get a list of subscription history for a group.
 
@@ -187,6 +203,7 @@ class Subscriptions:
             only_active: Whether to only include active subscriptions.
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict.
@@ -200,6 +217,7 @@ class Subscriptions:
             method="GET",
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
 
     def subscribe(
@@ -209,6 +227,7 @@ class Subscriptions:
         *,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Subscribe a group to a template.
 
@@ -217,6 +236,7 @@ class Subscriptions:
             template_id: The ID of the template to subscribe the group to.
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict.
@@ -233,6 +253,7 @@ class Subscriptions:
             body={},
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
 
     def unsubscribe(
@@ -241,6 +262,7 @@ class Subscriptions:
         *,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Unsubscribe a group from a template.
 
@@ -248,6 +270,7 @@ class Subscriptions:
             group_id: The ID of the group to unsubscribe.
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict.
@@ -262,4 +285,5 @@ class Subscriptions:
             method="POST",
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )

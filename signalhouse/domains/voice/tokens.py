@@ -34,6 +34,7 @@ class Tokens:
         *,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Mint an ephemeral voice token + SIP credentials.
         ``POST /voice/tokens``.
@@ -56,4 +57,5 @@ class Tokens:
             body=token_data or {},
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )

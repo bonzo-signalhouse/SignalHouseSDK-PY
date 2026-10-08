@@ -32,6 +32,7 @@ class Brands:
         registration_type: str | None = None,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Get a list of brands with optional filters.
 
@@ -46,6 +47,7 @@ class Brands:
             registration_type: Optional registration-type filter ("TEN_DLC", "TOLL_FREE", or "SHORT_CODE").
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict. Each brand may have ``brandId: null`` until a carrier
@@ -65,6 +67,7 @@ class Brands:
             method="GET",
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
 
     def get_external_vetting(
@@ -73,6 +76,7 @@ class Brands:
         *,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Get external vetting information for a brand.
 
@@ -80,6 +84,7 @@ class Brands:
             brand_id: Brand lookup id (carrier Brand ID, Mongo _id, or internal reference).
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict.
@@ -94,6 +99,7 @@ class Brands:
             method="GET",
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
 
     def create_brand(
@@ -102,6 +108,7 @@ class Brands:
         *,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Create a new brand.
 
@@ -111,6 +118,7 @@ class Brands:
                         street, city, state, postalCode, country, email, vertical.
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict. ``brandId`` may be ``null`` until carrier assignment — use ``_id`` to poll.
@@ -125,6 +133,7 @@ class Brands:
             body=brand_data,
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
 
     def create_toll_free_brand(
@@ -133,6 +142,7 @@ class Brands:
         *,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Create a new Toll-Free (TFN) brand.
 
@@ -147,6 +157,7 @@ class Brands:
                         fields, including the ``tollFree`` sub-object).
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict. For Toll-Free, ``brandId`` is a ``TFNB``-prefixed id when
@@ -162,6 +173,7 @@ class Brands:
             body=brand_data,
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
 
     def create_short_code_brand(
@@ -170,6 +182,7 @@ class Brands:
         *,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Create a local Short Code brand for manual Signal House review.
 
@@ -179,7 +192,7 @@ class Brands:
         ``PENDING_APPROVAL`` with a stable ``SCB``-prefixed brandId.
         """
         self._sdk._require({"brandData": brand_data})
-        return self._sdk._request("/brand/short-code", method="POST", body=brand_data, token=token, headers=headers)
+        return self._sdk._request("/brand/short-code", method="POST", body=brand_data, token=token, headers=headers, idempotency_key=idempotency_key)
 
     def approve_short_code_brand(
         self,
@@ -187,11 +200,12 @@ class Brands:
         *,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Approve a pending Short Code brand. Available only to signalhouse_admin."""
         self._sdk._require({"brandId": brand_id})
         safe_brand_id = quote(str(brand_id), safe="")
-        return self._sdk._request(f"/brand/approve/{safe_brand_id}", method="POST", token=token, headers=headers)
+        return self._sdk._request(f"/brand/approve/{safe_brand_id}", method="POST", token=token, headers=headers, idempotency_key=idempotency_key)
 
     def reject_short_code_brand(
         self,
@@ -200,6 +214,7 @@ class Brands:
         *,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Reject a pending Short Code brand with its required customer-visible reason. signalhouse_admin only."""
         self._sdk._require({"brandId": brand_id, "internalRejectionReason": internal_rejection_reason})
@@ -210,6 +225,7 @@ class Brands:
             body={"internalRejectionReason": internal_rejection_reason},
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
 
     def transfer_brand(
@@ -219,6 +235,7 @@ class Brands:
         *,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Transfer one or more brands to a different subgroup.
 
@@ -227,6 +244,7 @@ class Brands:
             brand_ids: Brand lookup ids to transfer (carrier id, Mongo _id, or internal reference).
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict.
@@ -242,6 +260,7 @@ class Brands:
             body={"brandIds": brand_ids},
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
 
     def create_external_vetting(
@@ -253,6 +272,7 @@ class Brands:
         *,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Create external vetting for a brand.
 
@@ -264,6 +284,7 @@ class Brands:
             additional_data: Provider-specific additional data forwarded to TCR.
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict.
@@ -282,6 +303,7 @@ class Brands:
             body=body,
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
 
     def import_external_vetting(
@@ -293,6 +315,7 @@ class Brands:
         *,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Import an existing external vetting record for a brand.
 
@@ -307,6 +330,7 @@ class Brands:
             vetting_token: The provider-issued vetting token (required by some providers, e.g. AEGIS).
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict.
@@ -327,6 +351,7 @@ class Brands:
             body=body,
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
 
     def update_brand(
@@ -336,6 +361,7 @@ class Brands:
         *,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Update a brand's information.
 
@@ -349,6 +375,7 @@ class Brands:
                         (e.g. ``"17025550100"``); subgroupId is immutable.
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict.
@@ -364,6 +391,7 @@ class Brands:
             body=brand_data,
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
 
     def revet_brand(
@@ -372,6 +400,7 @@ class Brands:
         *,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Revet a brand that is in UNVERIFIED status due to an update after it was previously VERIFIED or VETTED_VERIFIED.
 
@@ -379,6 +408,7 @@ class Brands:
             brand_id: Brand lookup id (carrier Brand ID, Mongo _id, or internal reference).
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict.
@@ -393,6 +423,7 @@ class Brands:
             method="PUT",
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
 
     def delete_brand(
@@ -401,6 +432,7 @@ class Brands:
         *,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Delete a brand (mark it as DELETED). The brand will still be retrievable.
 
@@ -408,6 +440,7 @@ class Brands:
             brand_id: Brand lookup id (carrier Brand ID, Mongo _id, or internal reference).
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict.
@@ -422,6 +455,7 @@ class Brands:
             method="DELETE",
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
 
     def get_appeal_history(
@@ -430,6 +464,7 @@ class Brands:
         *,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Get the appeal history for a brand.
 
@@ -437,6 +472,7 @@ class Brands:
             brand_id: Brand lookup id (carrier Brand ID, Mongo _id, or internal reference).
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict containing an array of BrandAppeal objects.
@@ -451,6 +487,7 @@ class Brands:
             method="GET",
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
 
     def submit_appeal(
@@ -462,6 +499,7 @@ class Brands:
         *,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Submit an appeal for a brand.
 
@@ -473,6 +511,7 @@ class Brands:
                   a tuple of (filename, file_object, content_type).
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict.
@@ -506,4 +545,5 @@ class Brands:
             files=files_list,
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )

@@ -27,10 +27,11 @@ class SipProfiles:
         *,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """List all SIP profiles. ``GET /voice/sip-profiles``."""
         return self._sdk._request(
-            "/voice/sip-profiles", method="GET", token=token, headers=headers,
+            "/voice/sip-profiles", method="GET", token=token, headers=headers, idempotency_key=idempotency_key,
         )
 
     def get(
@@ -39,13 +40,14 @@ class SipProfiles:
         *,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Get a single SIP profile by ID. Response does NOT include the password —
         use :py:meth:`get_password` to retrieve it. ``GET /voice/sip-profiles/:id``."""
         self._sdk._require({"id": id})
         safe_id = quote(str(id), safe="")
         return self._sdk._request(
-            f"/voice/sip-profiles/{safe_id}", method="GET", token=token, headers=headers,
+            f"/voice/sip-profiles/{safe_id}", method="GET", token=token, headers=headers, idempotency_key=idempotency_key,
         )
 
     def get_password(
@@ -54,13 +56,14 @@ class SipProfiles:
         *,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Fetch the SIP password for this profile. Returns ``{ "password": "..." }``.
         ``GET /voice/sip-profiles/:id/password``."""
         self._sdk._require({"id": id})
         safe_id = quote(str(id), safe="")
         return self._sdk._request(
-            f"/voice/sip-profiles/{safe_id}/password", method="GET", token=token, headers=headers,
+            f"/voice/sip-profiles/{safe_id}/password", method="GET", token=token, headers=headers, idempotency_key=idempotency_key,
         )
 
     def get_transports(
@@ -68,11 +71,12 @@ class SipProfiles:
         *,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """List valid SIP transports (UDP/TCP/TLS) with their address and port.
         ``GET /voice/sip-profiles/transports``."""
         return self._sdk._request(
-            "/voice/sip-profiles/transports", method="GET", token=token, headers=headers,
+            "/voice/sip-profiles/transports", method="GET", token=token, headers=headers, idempotency_key=idempotency_key,
         )
 
     def create(
@@ -81,6 +85,7 @@ class SipProfiles:
         *,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Create a SIP profile. ``POST /voice/sip-profiles``.
 
@@ -92,7 +97,7 @@ class SipProfiles:
         """
         self._sdk._require({"profileData": profile_data})
         return self._sdk._request(
-            "/voice/sip-profiles", method="POST", body=profile_data, token=token, headers=headers,
+            "/voice/sip-profiles", method="POST", body=profile_data, token=token, headers=headers, idempotency_key=idempotency_key,
         )
 
     def update(
@@ -102,6 +107,7 @@ class SipProfiles:
         *,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Update a SIP profile. ``PATCH /voice/sip-profiles/:id``.
 
@@ -111,7 +117,7 @@ class SipProfiles:
         self._sdk._require({"id": id, "updateData": update_data})
         safe_id = quote(str(id), safe="")
         return self._sdk._request(
-            f"/voice/sip-profiles/{safe_id}", method="PATCH", body=update_data, token=token, headers=headers,
+            f"/voice/sip-profiles/{safe_id}", method="PATCH", body=update_data, token=token, headers=headers, idempotency_key=idempotency_key,
         )
 
     def delete(
@@ -120,13 +126,14 @@ class SipProfiles:
         *,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Delete a SIP profile. Unassigns any linked numbers as a side effect.
         ``DELETE /voice/sip-profiles/:id``."""
         self._sdk._require({"id": id})
         safe_id = quote(str(id), safe="")
         return self._sdk._request(
-            f"/voice/sip-profiles/{safe_id}", method="DELETE", token=token, headers=headers,
+            f"/voice/sip-profiles/{safe_id}", method="DELETE", token=token, headers=headers, idempotency_key=idempotency_key,
         )
 
     def assign_number(
@@ -137,6 +144,7 @@ class SipProfiles:
         *,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Assign a phone number to this SIP profile (routes inbound calls on
         that number to the endpoint). ``POST /voice/sip-profiles/:id/assign-number``.
@@ -156,6 +164,7 @@ class SipProfiles:
             body=body,
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
 
     def unassign_number(
@@ -166,6 +175,7 @@ class SipProfiles:
         *,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Unassign a phone number from this SIP profile.
         ``POST /voice/sip-profiles/:id/unassign-number``.
@@ -184,4 +194,5 @@ class SipProfiles:
             body=body,
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )

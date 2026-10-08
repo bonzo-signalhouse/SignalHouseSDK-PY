@@ -26,6 +26,7 @@ class Webhooks:
         limit: int | None = None,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Get a list of webhooks with optional filters.
 
@@ -41,6 +42,7 @@ class Webhooks:
             limit: The number of items per page.
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict.
@@ -58,6 +60,7 @@ class Webhooks:
             method="GET",
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
 
     def create_webhook(
@@ -66,6 +69,7 @@ class Webhooks:
         *,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Create a new webhook with the specified data.
 
@@ -77,6 +81,7 @@ class Webhooks:
             webhook_data: The data for the new webhook, including endpoint URL and event types.
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict, including the plaintext `signingSecret` (this one time only).
@@ -91,6 +96,7 @@ class Webhooks:
             body=webhook_data,
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
 
     def update_webhook(
@@ -100,6 +106,7 @@ class Webhooks:
         *,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Update an existing webhook with the specified data.
 
@@ -114,6 +121,7 @@ class Webhooks:
             update_data: The data for the webhook to be updated.
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict.
@@ -129,6 +137,7 @@ class Webhooks:
             body=update_data,
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
 
     def rotate_webhook_secret(
@@ -138,6 +147,7 @@ class Webhooks:
         *,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Rotate a webhook's signing secret, or give a webhook created before signing its first one.
 
@@ -151,6 +161,7 @@ class Webhooks:
             grace_seconds: How long the replaced secret stays valid.
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict.
@@ -166,6 +177,7 @@ class Webhooks:
             body={} if grace_seconds is None else {"graceSeconds": grace_seconds},
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
 
     def delete_webhook(
@@ -174,6 +186,7 @@ class Webhooks:
         *,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Delete a webhook by its ID (mark as inactive).
 
@@ -181,6 +194,7 @@ class Webhooks:
             id: The ID of the webhook to delete.
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict.
@@ -195,4 +209,5 @@ class Webhooks:
             method="DELETE",
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )

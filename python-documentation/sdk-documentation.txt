@@ -54,6 +54,31 @@ CUSTOM HEADERS
     )
 
 
+IDEMPOTENT REQUESTS
+--------------------------------------------------------------------------------
+  Pass the "idempotency_key" keyword argument to make a create, update or
+  delete safe to retry. The SDK sends it as the Idempotency-Key header. A
+  retry with the same key and the same request replays the first response,
+  marked with the response header Idempotent-Replayed: true, instead of
+  running the request again.
+
+  - Use a new key (a UUID is recommended) for each new operation, and reuse
+    it only to retry that exact request.
+  - Keys are scoped to the authenticated user and kept for 24 hours.
+  - Reusing a key for a different request returns 422; retrying while the
+    first request is still running returns 409 with Retry-After.
+  - The SDK never creates a key for you. GET requests ignore it, and the
+    Voice service does not support it.
+
+  Example:
+    import uuid
+
+    response = signal_house.subgroups.create_subgroup(
+        {"groupId": "G0000001", "subgroupName": "Support"},
+        idempotency_key=str(uuid.uuid4()),
+    )
+
+
 ================================================================================
                           DOMAIN METHOD REFERENCE
 ================================================================================
@@ -615,9 +640,8 @@ etaDays}. Amounts are integer microdollars; setupAmount/monthlyAmount are per
 sender and the totals cover the quantity. groupId is optional and staff-only.
 
 Submit on POST /registration (201) with region, type, subgroupId,
-clientRequestId (UUID), capabilities (one of the type's bundles) and data. Reuse
-a clientRequestId only to retry an identical submission; a reuse with different
-data is a 409. Worked example, UK Virtual Long Code: type "VIRTUAL_LONG_CODE",
+capabilities (one of the type's bundles) and data. Set idempotency_key to make a
+retry safe (see IDEMPOTENT REQUESTS). Worked example, UK Virtual Long Code: type "VIRTUAL_LONG_CODE",
 capabilities ["SMS"] or ["SMS","VOICE"], data {quantity (1-100), useCases (1-10
 strings), voice?}. The voice dossier is required exactly when capabilities
 include VOICE: companyName, companyPhone, companyWebsite, companyEmail,
@@ -720,14 +744,14 @@ LANGUAGE EXAMPLE
   quotes = signal_house.registrations.get_quotes(region="GB", type="VIRTUAL_LONG_CODE", quantity=1)
   signal_house.registrations.create_registration({
       "region": "GB", "type": "VIRTUAL_LONG_CODE", "subgroupId": "SGEXAMPLE",
-      "clientRequestId": str(uuid.uuid4()), "capabilities": ["SMS"],
+      "capabilities": ["SMS"],
       "data": {"quantity": 1, "useCases": ["Support"]},
   })
   # UK alphanumeric sender ID
   signal_house.registrations.get_quotes(region="GB", type="ALPHANUMERIC_SENDER_ID")
   signal_house.registrations.create_registration({
       "region": "GB", "type": "ALPHANUMERIC_SENDER_ID", "subgroupId": "SGEXAMPLE",
-      "clientRequestId": str(uuid.uuid4()), "capabilities": ["SMS"],
+      "capabilities": ["SMS"],
       "data": {"requestedSenderId": "ACME", "trafficOrigin": "LOCAL", "trafficType": "TRANSACTIONAL",
                "companyName": "Acme", "companyCountry": "United Kingdom",
                "companyWebsite": "https://acme.example", "industry": "Retail",

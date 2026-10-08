@@ -24,6 +24,7 @@ class NumbersAdmin:
         *,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Change the status of a port-in request.
 
@@ -33,6 +34,7 @@ class NumbersAdmin:
             description: Optional description for the status change.
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict.
@@ -51,6 +53,7 @@ class NumbersAdmin:
             body=body,
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
 
     def approve_port_request(
@@ -59,6 +62,7 @@ class NumbersAdmin:
         *,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Approve a port-in request.
 
@@ -66,6 +70,7 @@ class NumbersAdmin:
             porting_id: The ID of the port-in request to approve.
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict.
@@ -80,15 +85,16 @@ class NumbersAdmin:
             method="POST",
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
 
     def get_short_code_acquisition_requests(
         self, *, page: int | None = None, limit: int | None = None, status: str | None = None,
-        search: str | None = None, token: str | None = None, headers: dict[str, str] | None = None,
+        search: str | None = None, token: str | None = None, headers: dict[str, str] | None = None, idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """List staff-only, campaign-bound Short Code acquisition requests."""
         query_string = self._sdk._get_query_string({"page": page, "limit": limit, "status": status, "search": search})
-        return self._sdk._request(f"/number/short-code/requests{query_string}", method="GET", token=token, headers=headers)
+        return self._sdk._request(f"/number/short-code/requests{query_string}", method="GET", token=token, headers=headers, idempotency_key=idempotency_key)
 
 
 class Numbers:
@@ -113,6 +119,7 @@ class Numbers:
         limit: int | None = None,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Get a list of phone numbers with optional filters.
 
@@ -127,6 +134,7 @@ class Numbers:
             limit: The number of items per page (default: 20).
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict.
@@ -163,6 +171,7 @@ class Numbers:
             method="GET",
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
 
     def get_number_health(
@@ -171,6 +180,7 @@ class Numbers:
         *,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Get the portal-parity health score (1–10) for an owned phone number.
 
@@ -180,6 +190,7 @@ class Numbers:
             phone_number: Owned phone number to score (11 digits, no + prefix).
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict with ``phoneNumber``, ``groupId``,
@@ -195,6 +206,7 @@ class Numbers:
             method="GET",
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
 
     def get_available_phone_numbers(
@@ -213,6 +225,7 @@ class Numbers:
         page: int | None = None,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Get a list of available phone numbers for purchase with optional filters.
 
@@ -230,6 +243,7 @@ class Numbers:
             page: The page number for pagination.
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict.
@@ -252,6 +266,7 @@ class Numbers:
             method="GET",
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
 
     def purchase_phone_number(
@@ -262,6 +277,7 @@ class Numbers:
         country: str = "US",
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Purchase phone numbers and assign them to a subgroup.
 
@@ -275,6 +291,7 @@ class Numbers:
             country: ISO-2 purchase country; US (default).
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict with a ``message`` field confirming the request was queued.
@@ -289,6 +306,7 @@ class Numbers:
             body={"phoneNumbers": phone_numbers, "subgroupId": subgroup_id, "country": country},
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
 
     def purchase_toll_free_numbers(
@@ -299,6 +317,7 @@ class Numbers:
         country: str = "US",
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Purchase one or more Toll-Free numbers via the asynchronous resource-request flow.
 
@@ -313,6 +332,7 @@ class Numbers:
                 approved brand and campaign.
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict resolving to ``{message, orderId}`` once the request is queued.
@@ -327,6 +347,7 @@ class Numbers:
             body={"quantity": quantity, "subgroupId": subgroup_id, "country": country},
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
 
     def request_short_code_acquisition(
@@ -344,6 +365,7 @@ class Numbers:
         lease_receipt_file: BinaryIO | tuple | None = None,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Request a campaign-bound Short Code acquisition or register a customer-owned Registry lease.
 
@@ -375,6 +397,7 @@ class Numbers:
             files=files_list,
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
 
     def get_toll_free_order_status(
@@ -383,6 +406,7 @@ class Numbers:
         *,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Read the outcome of a Toll-Free number purchase by its order ID.
 
@@ -394,6 +418,7 @@ class Numbers:
             order_id: The order id returned by ``purchase_toll_free_numbers``.
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict resolving to
@@ -409,6 +434,7 @@ class Numbers:
             method="GET",
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
 
     def update_phone_number(
@@ -418,6 +444,7 @@ class Numbers:
         *,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Update an existing phone number's details (e.g., setting a friendly name).
 
@@ -426,6 +453,7 @@ class Numbers:
             update_data: The data to update for the phone number (e.g., friendlyName).
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict.
@@ -441,6 +469,7 @@ class Numbers:
             body=update_data,
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
 
     def port_in_phone_number(
@@ -449,6 +478,7 @@ class Numbers:
         *,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Submit a port-in request for one or more phone numbers from another provider.
 
@@ -456,6 +486,7 @@ class Numbers:
             number_data: The port-in request data including owner info, address, phone numbers, and signature.
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict with the created port-in request.
@@ -470,6 +501,7 @@ class Numbers:
             body=number_data,
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
 
     def get_port_requests(
@@ -482,6 +514,7 @@ class Numbers:
         limit: int | None = None,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Get port-in requests with optional filters.
 
@@ -495,6 +528,7 @@ class Numbers:
             limit: The number of items per page (default: 20).
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict with paginated port-in requests.
@@ -511,6 +545,7 @@ class Numbers:
             method="GET",
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
 
     def get_port_request_by_id(
@@ -519,6 +554,7 @@ class Numbers:
         *,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Get a single port-in request by its ID.
 
@@ -526,6 +562,7 @@ class Numbers:
             id: The ID of the port-in request to retrieve.
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict with the port-in request.
@@ -540,6 +577,7 @@ class Numbers:
             method="GET",
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
 
     def get_porting_requests(
@@ -550,6 +588,7 @@ class Numbers:
         limit: int | None = None,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Get porting requests. If porting_id is provided, returns a single request; otherwise returns all.
 
@@ -559,13 +598,14 @@ class Numbers:
             limit: The number of items per page (only used when porting_id is not provided).
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict.
         """
         if porting_id is not None:
-            return self.get_port_request_by_id(id=porting_id, token=token, headers=headers)
-        return self.get_port_requests(page=page, limit=limit, token=token, headers=headers)
+            return self.get_port_request_by_id(id=porting_id, token=token, headers=headers, idempotency_key=idempotency_key)
+        return self.get_port_requests(page=page, limit=limit, token=token, headers=headers, idempotency_key=idempotency_key)
 
     def assign_phone_number_to_campaign(
         self,
@@ -574,6 +614,7 @@ class Numbers:
         *,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Assign phone numbers to a campaign. Numbers that are not found, already RELEASED, already
         assigned to a different campaign, on a mismatched DCA, or (for a 10DLC campaign without a number
@@ -585,6 +626,7 @@ class Numbers:
             phone_numbers: The list of phone numbers to assign.
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict resolving to ``{message, queued, skipped}`` - ``queued`` numbers
@@ -602,6 +644,7 @@ class Numbers:
             body={"phoneNumbers": phone_numbers},
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
 
     def unassign_phone_numbers_from_campaigns(
@@ -610,6 +653,7 @@ class Numbers:
         *,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Unassign phone numbers from any campaign they are currently assigned to.
 
@@ -617,6 +661,7 @@ class Numbers:
             phone_numbers: The list of phone numbers to unassign.
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict.
@@ -631,6 +676,7 @@ class Numbers:
             body={"phoneNumbers": phone_numbers},
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
 
     def delete_phone_numbers(
@@ -639,6 +685,7 @@ class Numbers:
         *,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Delete (release) phone numbers. This operation is irreversible.
 
@@ -648,6 +695,7 @@ class Numbers:
             phone_numbers: The list of phone numbers to delete.
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict.
@@ -662,6 +710,7 @@ class Numbers:
             body={"phoneNumbers": phone_numbers},
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
 
     def deactivate_phone_numbers(
@@ -670,6 +719,7 @@ class Numbers:
         *,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Deactivate one or more phone numbers. Numbers must be in READY status.
 
@@ -680,6 +730,7 @@ class Numbers:
             phone_numbers: The list of phone numbers to deactivate.
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict with an array of updated number objects.
@@ -694,6 +745,7 @@ class Numbers:
             body={"phoneNumbers": phone_numbers},
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
 
     def reactivate_phone_numbers(
@@ -702,6 +754,7 @@ class Numbers:
         *,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Reactivate one or more previously deactivated phone numbers.
 
@@ -712,6 +765,7 @@ class Numbers:
             phone_numbers: The list of phone numbers to reactivate.
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict with an array of updated number objects.
@@ -726,6 +780,7 @@ class Numbers:
             body={"phoneNumbers": phone_numbers},
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
 
     def transfer_phone_numbers(
@@ -735,6 +790,7 @@ class Numbers:
         *,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Transfer unassigned phone numbers from one subgroup to another.
 
@@ -743,6 +799,7 @@ class Numbers:
             new_subgroup_id: The ID of the new subgroup to transfer the numbers to.
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict.
@@ -754,6 +811,7 @@ class Numbers:
             body={"phoneNumbers": phone_numbers, "newSubgroupId": new_subgroup_id},
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
 
     def search_npa_nxx(
@@ -766,6 +824,7 @@ class Numbers:
         nxx: str | None = None,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Search NPA/NXX lookup data with optional filters.
 
@@ -780,6 +839,7 @@ class Numbers:
             nxx: Central office code filter (1-3 digits; optional country, no state/city).
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict.
@@ -796,6 +856,7 @@ class Numbers:
             method="GET",
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
 
     def lookup_locations(
@@ -804,6 +865,7 @@ class Numbers:
         *,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Batch lookup city/state for NPA/NXX pairs.
 
@@ -811,6 +873,7 @@ class Numbers:
             entries: NPA/NXX pairs to look up (max 50), each with 'npa' and 'nxx' keys.
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict with an array of {npa, nxx, city, state} objects.
@@ -821,6 +884,7 @@ class Numbers:
             body={"entries": entries},
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
 
     def migrate_phone_number_to_v2(
@@ -831,6 +895,7 @@ class Numbers:
         *,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Migrate a phone number (or all numbers in a group) from v1 to v2.
 
@@ -840,6 +905,7 @@ class Numbers:
             group_id: Group ID to migrate all non-released numbers for.
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict with migration queue confirmation.
@@ -850,4 +916,5 @@ class Numbers:
             body={"phoneNumber": phone_number, "campaignId": campaign_id, "groupId": group_id},
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )

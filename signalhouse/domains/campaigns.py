@@ -22,6 +22,7 @@ class CampaignsAdmin:
         *,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Approve a campaign that is pending approval.
 
@@ -29,6 +30,7 @@ class CampaignsAdmin:
             campaign_id: The ID of the campaign to approve.
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict.
@@ -43,6 +45,7 @@ class CampaignsAdmin:
             method="POST",
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
 
     def reject_campaign(
@@ -52,6 +55,7 @@ class CampaignsAdmin:
         rejection_reason: str | None = None,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Reject a campaign that is pending approval.
 
@@ -60,6 +64,7 @@ class CampaignsAdmin:
             rejection_reason: Optional rejection reason (10-256 characters).
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict.
@@ -76,6 +81,7 @@ class CampaignsAdmin:
             body=body,
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
 
     def update_short_code_campaign_status(
@@ -86,6 +92,7 @@ class CampaignsAdmin:
         rejection_reason: str | None = None,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Transition a Short Code campaign's review status (SHGHL-2225).
 
@@ -101,6 +108,7 @@ class CampaignsAdmin:
             rejection_reason: Required and nonblank for "REJECTED"/"DCA_REJECTED" (max 1024 characters).
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict containing the updated campaign.
@@ -116,53 +124,54 @@ class CampaignsAdmin:
             body={"status": status, "rejectionReason": rejection_reason},
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
 
     def fulfill_short_code_campaign(
         self, campaign_id: str, actual_code: str, *, lease_end_date: str, internal_notes: str | None = None,
-        token: str | None = None, headers: dict[str, str] | None = None,
+        token: str | None = None, headers: dict[str, str] | None = None, idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Record the issued code for a campaign-bound Signal House Short Code request. A YYYY-MM-DD lease date expires at 23:59:59 UTC."""
         self._sdk._require({"campaignId": campaign_id, "actualCode": actual_code, "leaseEndDate": lease_end_date})
         safe_campaign_id = quote(str(campaign_id), safe="")
-        return self._sdk._request(f"/campaign/short-code/{safe_campaign_id}/fulfill", method="POST", body={"actualCode": actual_code, "leaseEndDate": lease_end_date, "internalNotes": internal_notes}, token=token, headers=headers)
+        return self._sdk._request(f"/campaign/short-code/{safe_campaign_id}/fulfill", method="POST", body={"actualCode": actual_code, "leaseEndDate": lease_end_date, "internalNotes": internal_notes}, token=token, headers=headers, idempotency_key=idempotency_key)
 
     def submit_short_code_campaign_to_carrier(
-        self, campaign_id: str, *, token: str | None = None, headers: dict[str, str] | None = None,
+        self, campaign_id: str, *, token: str | None = None, headers: dict[str, str] | None = None, idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Submit an internally approved and fully prepared Short Code campaign to carrier review."""
         self._sdk._require({"campaignId": campaign_id})
         safe_campaign_id = quote(str(campaign_id), safe="")
-        return self._sdk._request(f"/campaign/short-code/{safe_campaign_id}/submit-to-carrier", method="POST", token=token, headers=headers)
+        return self._sdk._request(f"/campaign/short-code/{safe_campaign_id}/submit-to-carrier", method="POST", token=token, headers=headers, idempotency_key=idempotency_key)
 
     def complete_short_code_cancellation(
         self, campaign_id: str, request_id: str, *, note: str | None = None,
-        token: str | None = None, headers: dict[str, str] | None = None,
+        token: str | None = None, headers: dict[str, str] | None = None, idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Confirm Registry offboarding and complete a pending Short Code cancellation."""
         self._sdk._require({"campaignId": campaign_id, "requestId": request_id})
         safe_campaign_id = quote(str(campaign_id), safe="")
-        return self._sdk._request(f"/campaign/short-code/{safe_campaign_id}/cancellation/complete", method="POST", body={"requestId": request_id, "note": note}, token=token, headers=headers)
+        return self._sdk._request(f"/campaign/short-code/{safe_campaign_id}/cancellation/complete", method="POST", body={"requestId": request_id, "note": note}, token=token, headers=headers, idempotency_key=idempotency_key)
 
     def dismiss_short_code_cancellation(
         self, campaign_id: str, request_id: str, *, note: str | None = None,
-        token: str | None = None, headers: dict[str, str] | None = None,
+        token: str | None = None, headers: dict[str, str] | None = None, idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Dismiss a pending Short Code cancellation and restore its prior lifecycle state."""
         self._sdk._require({"campaignId": campaign_id, "requestId": request_id})
         safe_campaign_id = quote(str(campaign_id), safe="")
-        return self._sdk._request(f"/campaign/short-code/{safe_campaign_id}/cancellation/dismiss", method="POST", body={"requestId": request_id, "note": note}, token=token, headers=headers)
+        return self._sdk._request(f"/campaign/short-code/{safe_campaign_id}/cancellation/dismiss", method="POST", body={"requestId": request_id, "note": note}, token=token, headers=headers, idempotency_key=idempotency_key)
 
-    def get_expired_short_code_leases(self, *, page: int | None = None, limit: int | None = None, token: str | None = None, headers: dict[str, str] | None = None) -> dict[str, Any]:
+    def get_expired_short_code_leases(self, *, page: int | None = None, limit: int | None = None, token: str | None = None, headers: dict[str, str] | None = None, idempotency_key: str | None = None) -> dict[str, Any]:
         """Read staff-only expired Short Code leases awaiting Registry offboarding."""
         query = self._sdk._get_query_string({"page": page, "limit": limit})
-        return self._sdk._request(f"/campaign/short-code/expired-leases{query}", method="GET", token=token, headers=headers)
+        return self._sdk._request(f"/campaign/short-code/expired-leases{query}", method="GET", token=token, headers=headers, idempotency_key=idempotency_key)
 
-    def release_expired_short_code_lease(self, campaign_id: str, *, note: str | None = None, token: str | None = None, headers: dict[str, str] | None = None) -> dict[str, Any]:
+    def release_expired_short_code_lease(self, campaign_id: str, *, note: str | None = None, token: str | None = None, headers: dict[str, str] | None = None, idempotency_key: str | None = None) -> dict[str, Any]:
         """Confirm Registry offboarding and mark an expired Short Code released."""
         self._sdk._require({"campaignId": campaign_id})
         safe_campaign_id = quote(str(campaign_id), safe="")
-        return self._sdk._request(f"/campaign/short-code/{safe_campaign_id}/expired-lease/release", method="POST", body={"note": note}, token=token, headers=headers)
+        return self._sdk._request(f"/campaign/short-code/{safe_campaign_id}/expired-lease/release", method="POST", body={"note": note}, token=token, headers=headers, idempotency_key=idempotency_key)
 
 
 class Campaigns:
@@ -187,6 +196,7 @@ class Campaigns:
         registration_type: str | None = None,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Get a list of campaigns with optional filters.
 
@@ -201,6 +211,7 @@ class Campaigns:
             registration_type: Optional registration-type filter ("TEN_DLC", "TOLL_FREE", or "SHORT_CODE").
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict.
@@ -237,6 +248,7 @@ class Campaigns:
             method="GET",
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
 
     def get_campaign_health(
@@ -246,6 +258,7 @@ class Campaigns:
         include_numbers: bool | None = None,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Get aggregated campaign health (7-day and 30-day windows) for a campaign.
 
@@ -254,6 +267,7 @@ class Campaigns:
             include_numbers: When true, include per-number health entries.
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict.
@@ -268,6 +282,7 @@ class Campaigns:
             method="GET",
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
 
     def get_campaign_throughput_limits(
@@ -276,6 +291,7 @@ class Campaigns:
         campaign_id: str,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Get the carrier throughput ceilings a campaign is currently sending under.
 
@@ -288,6 +304,7 @@ class Campaigns:
             campaign_id: The campaign identifier.
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict: {campaignId, brandId, usecase, brand: {status, brandScore,
@@ -307,6 +324,7 @@ class Campaigns:
             method="GET",
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
 
     def create_campaign(
@@ -315,6 +333,7 @@ class Campaigns:
         *,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Create a new campaign.
 
@@ -324,6 +343,7 @@ class Campaigns:
                           termsAndConditionsLink, phoneNumbers.
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict.
@@ -338,6 +358,7 @@ class Campaigns:
             body=campaign_data,
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
 
     def create_toll_free_campaign(
@@ -346,6 +367,7 @@ class Campaigns:
         *,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Create a new Toll-Free (TFN) campaign and submit it for Signal House review.
 
@@ -359,6 +381,7 @@ class Campaigns:
                            must list 1-5 Toll-Free numbers, locked to the campaign once assigned.
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict.
@@ -373,6 +396,7 @@ class Campaigns:
             body=campaign_data,
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
 
     def create_short_code_campaign(
@@ -381,6 +405,7 @@ class Campaigns:
         *,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Create a new Short Code campaign and submit it for Signal House review (SHGHL-2225).
 
@@ -399,6 +424,7 @@ class Campaigns:
                 optInConfirmationMessage, screenshotUrl, optInUrl).
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict containing the created campaign.
@@ -414,6 +440,7 @@ class Campaigns:
             files=[],
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
 
     def update_short_code_campaign(
@@ -423,6 +450,7 @@ class Campaigns:
         *,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Update a Short Code campaign's editable fields (SHGHL-2225).
 
@@ -435,6 +463,7 @@ class Campaigns:
                 ``shortCode`` object of editable Short Code fields).
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict containing the updated campaign.
@@ -450,6 +479,7 @@ class Campaigns:
             body=update_data,
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
 
     def cancel_short_code_campaign(
@@ -458,6 +488,7 @@ class Campaigns:
         *,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Cancel a Short Code campaign (SHGHL-2225).
 
@@ -469,6 +500,7 @@ class Campaigns:
             campaign_id: The ID of the campaign to cancel.
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict containing the cancelled campaign.
@@ -483,6 +515,7 @@ class Campaigns:
             method="POST",
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
 
     def read_campaign_artifact(
@@ -491,6 +524,7 @@ class Campaigns:
         *,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Download a private Short Code external lease receipt.
 
@@ -502,6 +536,7 @@ class Campaigns:
                 ``numberSource.externalLease.receiptArtifactId`` on a Short Code campaign.
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict containing the raw file bytes.
@@ -516,6 +551,7 @@ class Campaigns:
             method="GET",
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
 
     def upload_opt_in_image(
@@ -524,6 +560,7 @@ class Campaigns:
         *,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Upload an opt-in proof image, returning a hosted URL for a Toll-Free campaign's optInImageURLs.
 
@@ -532,6 +569,7 @@ class Campaigns:
                   (filename, file_object, content_type).
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict containing the hosted image's ``id`` and ``url``.
@@ -547,6 +585,7 @@ class Campaigns:
             files=files_list,
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
 
     def capture_opt_in_image_from_landing(
@@ -556,6 +595,7 @@ class Campaigns:
         landing_id: str | None = None,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Auto-capture an opt-in proof image from a brand's generated landing page.
 
@@ -567,6 +607,7 @@ class Campaigns:
             landing_id: The specific page to capture. Required for Toll-Free brands, which have one page per campaign — omitted, the request is refused rather than guessing. A 10DLC brand has a single page, so it may be omitted there.
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict containing the hosted image's ``id`` and ``url``.
@@ -584,6 +625,7 @@ class Campaigns:
             body=body,
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
 
     def update_campaign(
@@ -593,6 +635,7 @@ class Campaigns:
         *,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Update an existing campaign.
 
@@ -605,6 +648,7 @@ class Campaigns:
                            changed — Toll-Free numbers are locked to their campaign.
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict.
@@ -620,6 +664,7 @@ class Campaigns:
             body=campaign_data,
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
 
     def delete_campaign(
@@ -628,6 +673,7 @@ class Campaigns:
         *,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Delete an existing campaign (mark it as EXPIRED). The campaign will still be retrievable.
 
@@ -635,6 +681,7 @@ class Campaigns:
             campaign_id: The ID of the campaign to delete.
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict.
@@ -649,6 +696,7 @@ class Campaigns:
             method="DELETE",
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
 
     def appeal_dca_rejection(
@@ -658,6 +706,7 @@ class Campaigns:
         *,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Appeal a DCA-rejected campaign.
 
@@ -666,6 +715,7 @@ class Campaigns:
             appeal_data: Optional request body (e.g., {"reason": "..."}).
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict.
@@ -681,6 +731,7 @@ class Campaigns:
             body=appeal_data,
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
 
     def nudge_dca_for_campaign(
@@ -689,6 +740,7 @@ class Campaigns:
         *,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Nudge a connectivity partner to prioritize review of a campaign.
 
@@ -698,6 +750,7 @@ class Campaigns:
             campaign_id: The ID of the campaign to nudge.
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict.
@@ -712,4 +765,5 @@ class Campaigns:
             method="POST",
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )

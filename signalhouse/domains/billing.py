@@ -28,6 +28,7 @@ class Billing:
         end_date: str | None = None,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Get transaction history with optional filters.
 
@@ -42,6 +43,7 @@ class Billing:
             end_date: ISO-8601 date or timestamp; normalized to end-of-UTC-day (inclusive). Hourly resolution is not supported.
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict.
@@ -61,6 +63,7 @@ class Billing:
             method="GET",
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
 
     def get_payment_history(
@@ -74,6 +77,7 @@ class Billing:
         timezone: str | None = None,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Get payment history (wallet recharge transactions) with server-side pagination.
 
@@ -86,6 +90,7 @@ class Billing:
             timezone: IANA timezone (default: "UTC").
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict with data array and pagination metadata.
@@ -107,6 +112,7 @@ class Billing:
             method="GET",
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
 
     def get_wallet(
@@ -115,6 +121,7 @@ class Billing:
         *,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Get the wallet information for a specific group.
 
@@ -122,6 +129,7 @@ class Billing:
             group_id: The ID of the group to get the wallet information for.
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict.
@@ -136,6 +144,7 @@ class Billing:
             method="GET",
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
 
     def update_wallet(
@@ -149,6 +158,7 @@ class Billing:
         secondary_payment_method_id: str | None = None,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Update the wallet settings for a specific group.
 
@@ -161,6 +171,7 @@ class Billing:
             secondary_payment_method_id: The ID of the secondary payment method if primary fails.
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict.
@@ -187,6 +198,7 @@ class Billing:
             body=body,
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
 
     def get_payment_methods(
@@ -195,6 +207,7 @@ class Billing:
         *,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Get the payment methods for a specific group.
 
@@ -202,6 +215,7 @@ class Billing:
             group_id: The ID of the group to get the payment methods for.
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict.
@@ -216,6 +230,7 @@ class Billing:
             method="GET",
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
 
     def add_funds(
@@ -226,6 +241,7 @@ class Billing:
         payment_method_id: str | None = None,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Add funds to a group's wallet.
 
@@ -235,6 +251,7 @@ class Billing:
             payment_method_id: The ID of the payment method to use for adding funds.
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict.
@@ -253,6 +270,7 @@ class Billing:
             body=body,
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
 
     def add_payment_method(
@@ -262,6 +280,7 @@ class Billing:
         *,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Add a payment method to a group's wallet.
 
@@ -270,6 +289,7 @@ class Billing:
             payment_method_id: The ID of the payment method to add.
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict.
@@ -285,6 +305,7 @@ class Billing:
             body={"paymentMethodId": payment_method_id},
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
 
     def remove_payment_method(
@@ -294,6 +315,7 @@ class Billing:
         *,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Remove a payment method from a group's wallet.
 
@@ -302,6 +324,7 @@ class Billing:
             payment_method_id: The ID of the payment method to remove.
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict.
@@ -317,6 +340,7 @@ class Billing:
             method="DELETE",
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
 
     def get_invoice_details(
@@ -328,6 +352,7 @@ class Billing:
         end_date: str | None = None,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Get invoice details with optional filters.
 
@@ -338,6 +363,7 @@ class Billing:
             end_date: ISO-8601 date or timestamp; normalized to end-of-UTC-day (inclusive). Hourly resolution is not supported.
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict.
@@ -353,6 +379,7 @@ class Billing:
             method="GET",
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
 
     def get_fees(
@@ -361,6 +388,7 @@ class Billing:
         *,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Get the fee schedule for a specific group.
 
@@ -368,6 +396,7 @@ class Billing:
             group_id: The ID of the group to get fees for.
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict.
@@ -382,4 +411,5 @@ class Billing:
             method="GET",
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )

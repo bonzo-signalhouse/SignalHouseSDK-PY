@@ -25,6 +25,7 @@ class GlobalVoiceSettings:
         *,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Get the current account's global voice settings.
         ``GET /voice/api/v1/global-voice-settings``.
@@ -36,9 +37,10 @@ class GlobalVoiceSettings:
         Args:
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
         """
         return self._sdk._request(
-            "/voice/api/v1/global-voice-settings", method="GET", token=token, headers=headers,
+            "/voice/api/v1/global-voice-settings", method="GET", token=token, headers=headers, idempotency_key=idempotency_key,
         )
 
     def update(
@@ -47,6 +49,7 @@ class GlobalVoiceSettings:
         *,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Upsert the account's global voice settings.
         ``PUT /voice/api/v1/global-voice-settings``.
@@ -63,6 +66,7 @@ class GlobalVoiceSettings:
                 may dial 911.
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
         """
         self._sdk._require({"settingsData": settings_data})
         return self._sdk._request(
@@ -71,4 +75,5 @@ class GlobalVoiceSettings:
             body=settings_data,
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )

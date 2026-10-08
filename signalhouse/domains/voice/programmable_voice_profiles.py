@@ -31,11 +31,12 @@ class ProgrammableVoiceProfiles:
         *,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """List all Programmable Voice Profiles for the current account.
         ``GET /voice/api/v1/programmable-voice-profiles``. Returns ``{ "profiles": [...] }``."""
         return self._sdk._request(
-            "/voice/api/v1/programmable-voice-profiles", method="GET", token=token, headers=headers,
+            "/voice/api/v1/programmable-voice-profiles", method="GET", token=token, headers=headers, idempotency_key=idempotency_key,
         )
 
     def get(
@@ -44,13 +45,14 @@ class ProgrammableVoiceProfiles:
         *,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Get a single Programmable Voice Profile by ID.
         ``GET /voice/api/v1/programmable-voice-profiles/:id``. Returns ``{ "profile": {...} }``."""
         self._sdk._require({"id": id})
         safe_id = quote(str(id), safe="")
         return self._sdk._request(
-            f"/voice/api/v1/programmable-voice-profiles/{safe_id}", method="GET", token=token, headers=headers,
+            f"/voice/api/v1/programmable-voice-profiles/{safe_id}", method="GET", token=token, headers=headers, idempotency_key=idempotency_key,
         )
 
     def create(
@@ -59,6 +61,7 @@ class ProgrammableVoiceProfiles:
         *,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Create a Programmable Voice Profile. ``POST /voice/api/v1/programmable-voice-profiles``.
 
@@ -79,7 +82,7 @@ class ProgrammableVoiceProfiles:
         """
         self._sdk._require({"profileData": profile_data})
         return self._sdk._request(
-            "/voice/api/v1/programmable-voice-profiles", method="POST", body=profile_data, token=token, headers=headers,
+            "/voice/api/v1/programmable-voice-profiles", method="POST", body=profile_data, token=token, headers=headers, idempotency_key=idempotency_key,
         )
 
     def update(
@@ -89,6 +92,7 @@ class ProgrammableVoiceProfiles:
         *,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Update an existing Programmable Voice Profile (partial).
         ``PATCH /voice/api/v1/programmable-voice-profiles/:id``.
@@ -106,7 +110,7 @@ class ProgrammableVoiceProfiles:
         self._sdk._require({"id": id, "updateData": update_data})
         safe_id = quote(str(id), safe="")
         return self._sdk._request(
-            f"/voice/api/v1/programmable-voice-profiles/{safe_id}", method="PATCH", body=update_data, token=token, headers=headers,
+            f"/voice/api/v1/programmable-voice-profiles/{safe_id}", method="PATCH", body=update_data, token=token, headers=headers, idempotency_key=idempotency_key,
         )
 
     def toggle_active(
@@ -115,13 +119,14 @@ class ProgrammableVoiceProfiles:
         *,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Toggle a profile active/inactive.
         ``POST /voice/api/v1/programmable-voice-profiles/:id/toggle-active``. Returns ``{ "profile": {...} }``."""
         self._sdk._require({"id": id})
         safe_id = quote(str(id), safe="")
         return self._sdk._request(
-            f"/voice/api/v1/programmable-voice-profiles/{safe_id}/toggle-active", method="POST", token=token, headers=headers,
+            f"/voice/api/v1/programmable-voice-profiles/{safe_id}/toggle-active", method="POST", token=token, headers=headers, idempotency_key=idempotency_key,
         )
 
     def delete(
@@ -130,6 +135,7 @@ class ProgrammableVoiceProfiles:
         *,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Delete a Programmable Voice Profile. Its number assignments cascade away,
         so those numbers fall back to subgroup/global routing.
@@ -137,7 +143,7 @@ class ProgrammableVoiceProfiles:
         self._sdk._require({"id": id})
         safe_id = quote(str(id), safe="")
         return self._sdk._request(
-            f"/voice/api/v1/programmable-voice-profiles/{safe_id}", method="DELETE", token=token, headers=headers,
+            f"/voice/api/v1/programmable-voice-profiles/{safe_id}", method="DELETE", token=token, headers=headers, idempotency_key=idempotency_key,
         )
 
     def assign_number(
@@ -147,6 +153,7 @@ class ProgrammableVoiceProfiles:
         *,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Assign a phone number (by E.164) to this profile. Rejected if the number
         is already configured on a SIP trunk/endpoint or another profile — it must
@@ -160,6 +167,7 @@ class ProgrammableVoiceProfiles:
             body={"e164": e164},
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
 
     def unassign_number(
@@ -169,6 +177,7 @@ class ProgrammableVoiceProfiles:
         *,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Unassign a phone number (by E.164) from this profile.
         ``POST /voice/api/v1/programmable-voice-profiles/:id/unassign-number``. Returns ``{ "profile": {...} }``."""
@@ -180,4 +189,5 @@ class ProgrammableVoiceProfiles:
             body={"e164": e164},
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )

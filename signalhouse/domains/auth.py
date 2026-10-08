@@ -22,6 +22,7 @@ class Auth:
         *,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Login with email and password.
 
@@ -30,6 +31,7 @@ class Auth:
             password: The user's password.
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict.
@@ -40,6 +42,7 @@ class Auth:
             body={"email": email, "password": password},
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
 
     def reset_password(
@@ -49,6 +52,7 @@ class Auth:
         *,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Reset a user's password.
 
@@ -57,6 +61,7 @@ class Auth:
             new_password: The new password to set for the user.
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict.
@@ -72,6 +77,7 @@ class Auth:
             body={"newPassword": new_password},
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
 
     def forgot_password(
@@ -80,6 +86,7 @@ class Auth:
         *,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Request a password-reset link be emailed to the given address (public).
 
@@ -90,6 +97,7 @@ class Auth:
             email: The email address to send a reset link to.
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict ({"success": True}).
@@ -104,6 +112,7 @@ class Auth:
             body={"email": email},
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
 
     def reset_password_with_token(
@@ -113,6 +122,7 @@ class Auth:
         *,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Reset a password using the single-use token from a reset email (public).
 
@@ -121,6 +131,7 @@ class Auth:
             password: The new password to set (min 8 characters).
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict ({"success": True}).
@@ -135,6 +146,7 @@ class Auth:
             body={"token": token_value, "password": password},
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
 
     def get_auth_history(
@@ -146,6 +158,7 @@ class Auth:
         limit: int | None = None,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Get token login history for a group or user.
 
@@ -156,6 +169,7 @@ class Auth:
             limit: Results per page (min 1, max 100, default 20).
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict.
@@ -175,6 +189,7 @@ class Auth:
             method="GET",
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
 
     def logout_all(
@@ -182,12 +197,14 @@ class Auth:
         *,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Log out all other users in the caller's active group.
 
         Args:
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict containing loggedOutCount.
@@ -197,6 +214,7 @@ class Auth:
             method="POST",
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
 
     def get_group_id(
@@ -204,6 +222,7 @@ class Auth:
         *,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Get the Group ID associated with the caller's JWT (their active group).
 
@@ -212,6 +231,7 @@ class Auth:
         Args:
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict containing {"groupId": ...}.
@@ -221,6 +241,7 @@ class Auth:
             method="GET",
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
 
     def request_external_link_token(
@@ -229,6 +250,7 @@ class Auth:
         *,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Mint a single-use, short-lived external-link token for the authenticated caller.
 
@@ -239,6 +261,7 @@ class Auth:
             product: The external system to link to ("ghl" or "shopify").
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict ({"token": ...}).
@@ -253,4 +276,5 @@ class Auth:
             body={"product": product},
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )

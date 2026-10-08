@@ -22,6 +22,7 @@ class UsersAdmin:
         user_type: str | None = None,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Get a list of users with optional filters (admin).
 
@@ -30,6 +31,7 @@ class UsersAdmin:
             user_type: Filter users by type (user, service).
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict.
@@ -43,6 +45,7 @@ class UsersAdmin:
             method="GET",
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
 
     def create_internal_user(
@@ -51,6 +54,7 @@ class UsersAdmin:
         *,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Create a new internal user (admin or service user).
 
@@ -58,6 +62,7 @@ class UsersAdmin:
             data: The data for the new internal user, including groupId, name, and role.
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict.
@@ -72,6 +77,7 @@ class UsersAdmin:
             body=data,
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
 
 
@@ -92,6 +98,7 @@ class Users:
         user_type: str | None = None,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Get a list of users with optional filters.
 
@@ -101,6 +108,7 @@ class Users:
             user_type: Filter by user type (user, service).
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict.
@@ -115,6 +123,7 @@ class Users:
             method="GET",
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
 
     def create_user(
@@ -123,6 +132,7 @@ class Users:
         *,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Create a new user with the specified user data.
 
@@ -131,6 +141,7 @@ class Users:
                   password, and email.
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict.
@@ -145,6 +156,7 @@ class Users:
             body=data,
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
 
     def create_service_user(
@@ -153,6 +165,7 @@ class Users:
         *,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Create a new service user for API keys and non-human users.
 
@@ -165,6 +178,7 @@ class Users:
                   both must match.
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict.
@@ -179,6 +193,7 @@ class Users:
             body=data,
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
 
     def update_user(
@@ -188,6 +203,7 @@ class Users:
         *,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Update an existing user's information.
 
@@ -199,6 +215,7 @@ class Users:
                   cannot change its own.
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict.
@@ -214,6 +231,7 @@ class Users:
             body=data,
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
 
     def delete_user(
@@ -222,6 +240,7 @@ class Users:
         *,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Delete a user by their ID (mark as inactive).
 
@@ -229,6 +248,7 @@ class Users:
             id: The ID of the user to delete.
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict.
@@ -243,6 +263,7 @@ class Users:
             method="DELETE",
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
 
     def get_notification_preferences(
@@ -251,6 +272,7 @@ class Users:
         *,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Get notification preferences for a user.
 
@@ -258,6 +280,7 @@ class Users:
             id: The ID of the user.
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict.
@@ -272,6 +295,7 @@ class Users:
             method="GET",
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
 
     def update_notification_preferences(
@@ -281,6 +305,7 @@ class Users:
         *,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Update notification preferences for a user.
 
@@ -290,6 +315,7 @@ class Users:
                                      keys: name (str), web (bool), email (bool).
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict.
@@ -305,4 +331,5 @@ class Users:
             body={"notificationPreferences": notification_preferences},
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )

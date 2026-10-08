@@ -22,6 +22,7 @@ class Landings:
         *,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Get details of a landing page by its ID.
 
@@ -29,6 +30,7 @@ class Landings:
             landing_id: The ID of the landing page to retrieve.
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict.
@@ -43,6 +45,7 @@ class Landings:
             method="GET",
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
 
     def get_public_landing(
@@ -51,6 +54,7 @@ class Landings:
         *,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Get a public (published) landing page by its ID.
 
@@ -60,6 +64,7 @@ class Landings:
             landing_id: The ID of the public landing page to retrieve.
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict.
@@ -74,6 +79,7 @@ class Landings:
             method="GET",
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
 
     def create_landing(
@@ -83,6 +89,7 @@ class Landings:
         file: BinaryIO | tuple | None = None,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Create a new landing page with the specified landing data and optional logo file.
 
@@ -100,6 +107,7 @@ class Landings:
                   a tuple of (filename, file_object, content_type).
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict.
@@ -127,6 +135,7 @@ class Landings:
             files=files_list if files_list else None,
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
 
     def update_landing(
@@ -137,6 +146,7 @@ class Landings:
         file: BinaryIO | tuple | None = None,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Update an existing landing page with the specified landing data and optional logo file.
 
@@ -149,6 +159,7 @@ class Landings:
                   a tuple of (filename, file_object, content_type).
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict.
@@ -182,6 +193,7 @@ class Landings:
             files=files_list if files_list else None,
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
 
     def get_landing_by_brand_id(
@@ -190,6 +202,7 @@ class Landings:
         *,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Get a landing page by its associated brand ID.
 
@@ -197,6 +210,7 @@ class Landings:
             brand_id: The brand ID to look up the landing page for.
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict.
@@ -211,6 +225,7 @@ class Landings:
             method="GET",
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
 
     def get_landing_template(
@@ -219,6 +234,7 @@ class Landings:
         *,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Get a brand's Toll-Free landing page template.
 
@@ -229,6 +245,7 @@ class Landings:
             brand_id: The brand ID to look up the template for.
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict.
@@ -243,6 +260,7 @@ class Landings:
             method="GET",
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
 
     def upsert_landing_template(
@@ -253,6 +271,7 @@ class Landings:
         file: BinaryIO | tuple | None = None,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Create or replace a brand's Toll-Free landing page template.
 
@@ -270,6 +289,7 @@ class Landings:
                   (filename, file_object, content_type).
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict.
@@ -300,6 +320,7 @@ class Landings:
             files=files_list if files_list else None,
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
 
     def delete_landing(
@@ -308,6 +329,7 @@ class Landings:
         *,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Delete a landing page by its ID.
 
@@ -315,6 +337,7 @@ class Landings:
             landing_id: The ID of the landing page to delete.
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict.
@@ -329,4 +352,5 @@ class Landings:
             method="DELETE",
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )

@@ -21,6 +21,7 @@ class Shortlinks:
         *,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Get the redirect URL for a shortlink by its ID.
 
@@ -28,6 +29,7 @@ class Shortlinks:
             shortlink_id: The ID of the shortlink.
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict.
@@ -42,6 +44,7 @@ class Shortlinks:
             method="GET",
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
 
     def get_opt_out(
@@ -50,6 +53,7 @@ class Shortlinks:
         *,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Get the recipient opt-out details behind an alphanumeric-sender opt-out link.
 
@@ -57,6 +61,7 @@ class Shortlinks:
             code: The opt-out code from the sihou.io/o/{code} link.
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict; data is
@@ -72,6 +77,7 @@ class Shortlinks:
             method="GET",
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
 
     def confirm_opt_out(
@@ -80,6 +86,7 @@ class Shortlinks:
         *,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Confirm the recipient opt-out behind an alphanumeric-sender opt-out link; idempotent.
 
@@ -87,6 +94,7 @@ class Shortlinks:
             code: The opt-out code from the sihou.io/o/{code} link.
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict; data is
@@ -102,6 +110,7 @@ class Shortlinks:
             method="POST",
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
 
     def get_shortlink(
@@ -118,6 +127,7 @@ class Shortlinks:
         limit: int | None = None,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Get details of a shortlink with optional filters.
 
@@ -133,6 +143,7 @@ class Shortlinks:
             limit: The number of items per page.
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict.
@@ -153,4 +164,5 @@ class Shortlinks:
             method="GET",
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )

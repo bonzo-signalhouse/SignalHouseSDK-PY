@@ -92,6 +92,7 @@ class SignalHouseSDK:
         token: str | None = None,
         headers: dict[str, str] | None = None,
         files: dict[str, Any] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Make an HTTP request to the SignalHouse API.
 
@@ -102,6 +103,7 @@ class SignalHouseSDK:
             token: An optional bearer token to override the default API key.
             headers: Additional headers to include in the request.
             files: Files to upload (for multipart requests).
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             A standardized response dict with keys: success, data/error, status.
@@ -113,6 +115,8 @@ class SignalHouseSDK:
             req_headers["Authorization"] = f"Bearer {token}"
         if headers:
             req_headers.update(headers)
+        if idempotency_key:
+            req_headers["Idempotency-Key"] = idempotency_key
 
         try:
             if files is not None:
@@ -158,6 +162,7 @@ class SignalHouseSDK:
         files: list[tuple[str, Any]] | None = None,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Make a multipart/form-data request to the SignalHouse API.
 
@@ -168,6 +173,7 @@ class SignalHouseSDK:
             files: Files to upload as a list of (field_name, file_or_tuple) pairs.
             token: An optional bearer token to override the default API key.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             A standardized response dict with keys: success, data/error, status.
@@ -181,6 +187,8 @@ class SignalHouseSDK:
         req_headers.pop("Content-Type", None)
         if headers:
             req_headers.update(headers)
+        if idempotency_key:
+            req_headers["Idempotency-Key"] = idempotency_key
 
         try:
             response = self._session.request(

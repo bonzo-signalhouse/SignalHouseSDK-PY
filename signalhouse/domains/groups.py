@@ -23,6 +23,7 @@ class GroupsAdmin:
         offset: int | None = None,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Get resource counts grouped by group ID.
 
@@ -35,9 +36,10 @@ class GroupsAdmin:
             offset: Rows to skip; requires limit.
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
         """
         query_string = self._sdk._get_query_string({"groupId": group_id, "limit": limit, "offset": offset})
-        return self._sdk._request(f"/group/counts{query_string}", method="GET", token=token, headers=headers)
+        return self._sdk._request(f"/group/counts{query_string}", method="GET", token=token, headers=headers, idempotency_key=idempotency_key)
 
     def get_groups(
         self,
@@ -46,6 +48,7 @@ class GroupsAdmin:
         limit: int | None = None,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Get a list of all groups with optional pagination.
 
@@ -54,6 +57,7 @@ class GroupsAdmin:
             limit: The number of items per page.
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict.
@@ -64,6 +68,7 @@ class GroupsAdmin:
             method="GET",
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
 
     def create_group(
@@ -72,6 +77,7 @@ class GroupsAdmin:
         *,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Create a new group with the specified group data.
 
@@ -80,6 +86,7 @@ class GroupsAdmin:
                 Optionally accepts psPartnerKey and ownerEmail to credit a referring partner.
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict.
@@ -94,6 +101,7 @@ class GroupsAdmin:
             body=group_data,
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
 
     def delete_group(
@@ -102,6 +110,7 @@ class GroupsAdmin:
         *,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Delete a group with the specified group ID.
 
@@ -109,6 +118,7 @@ class GroupsAdmin:
             group_id: The ID of the group to delete.
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict.
@@ -123,6 +133,7 @@ class GroupsAdmin:
             method="DELETE",
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
 
     def update_compliance_status(
@@ -132,6 +143,7 @@ class GroupsAdmin:
         *,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Set a group's KYC compliance_status (SHGHL-2740).
 
@@ -143,6 +155,7 @@ class GroupsAdmin:
             compliance_status: One of "unverified", "pending", "verified", "rejected".
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict.
@@ -158,6 +171,7 @@ class GroupsAdmin:
             body={"complianceStatus": compliance_status},
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
 
     def link_external(
@@ -169,6 +183,7 @@ class GroupsAdmin:
         existing_group_id: str | None = None,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Link an external tenant (GHL/Shopify) to a V2 group (server-to-server).
 
@@ -182,6 +197,7 @@ class GroupsAdmin:
             existing_group_id: An existing V2 group ID to repoint to, if any.
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict ({"status": ..., "canonicalGroupId": ..., ...}).
@@ -207,6 +223,7 @@ class GroupsAdmin:
             body=body,
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
 
 
@@ -225,6 +242,7 @@ class Groups:
         id: str | None = None,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Get details of a group by its ID.
 
@@ -232,6 +250,7 @@ class Groups:
             id: The ID of the group to retrieve.
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict.
@@ -242,6 +261,7 @@ class Groups:
             method="GET",
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
 
     def update_group(
@@ -251,6 +271,7 @@ class Groups:
         *,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Update a group with the specified group data.
 
@@ -260,6 +281,7 @@ class Groups:
                 Optional CNP fields: cspId (str | None), defaultCnpSubgroupId (str | None).
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict.
@@ -275,4 +297,5 @@ class Groups:
             body=group_data,
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )

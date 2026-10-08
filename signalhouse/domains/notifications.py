@@ -26,6 +26,7 @@ class Notifications:
         event_types: str | list[str] | None = None,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Get notifications by id or by group_id with optional filters.
 
@@ -38,6 +39,7 @@ class Notifications:
             event_types: Event types to filter by (comma-separated string or list).
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict.
@@ -59,6 +61,7 @@ class Notifications:
             method="GET",
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
 
     def update_notification_status(
@@ -68,6 +71,7 @@ class Notifications:
         *,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Update the status of one or more notifications.
 
@@ -76,6 +80,7 @@ class Notifications:
             status: New status: "READ" or "UNREAD".
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict.
@@ -90,6 +95,7 @@ class Notifications:
             body={"ids": ids, "status": status},
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
 
     def delete_notification(
@@ -98,6 +104,7 @@ class Notifications:
         *,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Delete a notification by id.
 
@@ -105,6 +112,7 @@ class Notifications:
             id: The notification id to delete.
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict.
@@ -119,4 +127,5 @@ class Notifications:
             method="DELETE",
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )

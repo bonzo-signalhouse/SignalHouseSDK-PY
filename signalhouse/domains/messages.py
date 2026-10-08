@@ -20,7 +20,7 @@ class Messages:
     def __init__(self, sdk: SignalHouseSDK) -> None:
         self._sdk = sdk
 
-    def estimate_message(self, sender_phone_number: str, recipient_phone_numbers: list[str], message_body: str, *, message_type: str = "SMS", token: str | None = None, headers: dict[str, str] | None = None) -> dict[str, Any]:
+    def estimate_message(self, sender_phone_number: str, recipient_phone_numbers: list[str], message_body: str, *, message_type: str = "SMS", token: str | None = None, headers: dict[str, str] | None = None, idempotency_key: str | None = None) -> dict[str, Any]:
         """Estimate Canadian or UK retail cost in microdollars; no charge or send.
 
         A Ready Canadian sender takes SMS or MMS to Canadian or US recipients; a UK (+44) virtual long code
@@ -29,7 +29,7 @@ class Messages:
         (e.g. "ACME"; UK recipients, SMS only); its estimate counts the "\\nOpt out: sihou.io/o/{code}" footer the
         server appends to every such message.
         """
-        return self._sdk._request("/message/estimate", method="POST", body={"senderPhoneNumber": sender_phone_number, "recipientPhoneNumbers": recipient_phone_numbers, "messageBody": message_body, "messageType": message_type}, token=token, headers=headers)
+        return self._sdk._request("/message/estimate", method="POST", body={"senderPhoneNumber": sender_phone_number, "recipientPhoneNumbers": recipient_phone_numbers, "messageBody": message_body, "messageType": message_type}, token=token, headers=headers, idempotency_key=idempotency_key)
 
     def get_messages(
         self,
@@ -61,6 +61,7 @@ class Messages:
         date_bounds: str | None = None,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Get a list of messages with optional filters and pagination.
 
@@ -104,6 +105,7 @@ class Messages:
                 it names and a bare date is its whole UTC day. Omitted: "day".
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict. Inbound messages also carry sentimentScore (-100..100, None
@@ -142,6 +144,7 @@ class Messages:
             method="GET",
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
 
     def get_analytics(
@@ -164,6 +167,7 @@ class Messages:
         date_bounds: str | None = None,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Get aggregated analytics for messages with optional filters.
 
@@ -193,6 +197,7 @@ class Messages:
                 it names and a bare date is its whole UTC day. Omitted: "day".
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict. Also includes inbound-message sentiment for the requested
@@ -224,6 +229,7 @@ class Messages:
             method="GET",
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
 
     def get_analytics_detail(
@@ -248,6 +254,7 @@ class Messages:
         date_bounds: str | None = None,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Get detailed analytics snapshot records for charting and aggregation.
 
@@ -286,6 +293,7 @@ class Messages:
                 it names and a bare date is its whole UTC day. Omitted: "day".
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict with array of analytics snapshot records. cardTotals and every
@@ -319,6 +327,7 @@ class Messages:
             method="GET",
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
 
     def get_analytics_throughput(
@@ -336,6 +345,7 @@ class Messages:
         date_bounds: str | None = None,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Get per-minute send throughput per time bucket and per carrier family.
 
@@ -364,6 +374,7 @@ class Messages:
                 it names and a bare date is its whole UTC day. Omitted: "day".
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict with totals, byDate, byCarrierFamily and byBreakdown
@@ -389,6 +400,7 @@ class Messages:
             method="GET",
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
 
     def get_analytics_filter_options(
@@ -398,6 +410,7 @@ class Messages:
         region: str | list[str] | None = None,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Get filter dropdown options (subgroups, brands, campaigns, phone numbers) for the
         Analytics page, scoped to a single group. Sourced from ClickHouse — only items with
@@ -409,6 +422,7 @@ class Messages:
                 list. Only accepted where the environment serves hourly analytics; elsewhere any value is rejected with a 400.
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict with subgroups, brands, campaigns, and phoneNumbers arrays.
@@ -425,6 +439,7 @@ class Messages:
             method="GET",
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
 
     def get_analytics_by_subgroup(
@@ -449,6 +464,7 @@ class Messages:
         date_bounds: str | None = None,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Get a paginated breakdown of message metrics grouped by subgroup. Each row
         carries the full set of sms/mms/p2p metric columns plus ``smsOptOuts`` and
@@ -512,6 +528,7 @@ class Messages:
             method="GET",
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
 
     def get_analytics_by_error_code(
@@ -535,6 +552,7 @@ class Messages:
         date_bounds: str | None = None,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Get a paginated breakdown of failed messages grouped by error code. Each row
         contains per-channel (sms/mms/p2p) error counts plus an enriched description.
@@ -583,6 +601,7 @@ class Messages:
             method="GET",
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
 
     def get_dnc_analytics(
@@ -603,6 +622,7 @@ class Messages:
         date_bounds: str | None = None,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Get aggregated DNC (Do Not Contact) opt-out analytics with optional filters.
 
@@ -636,6 +656,7 @@ class Messages:
                 it names and a bare date is its whole UTC day. Omitted: "day".
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict with totals, byDate, byPhoneNumber, byCarrier, byKeyword.
@@ -665,6 +686,7 @@ class Messages:
             method="GET",
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
 
     def get_dnc_records(
@@ -689,6 +711,7 @@ class Messages:
         date_bounds: str | None = None,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Get paginated Do Not Call records with optional filters.
 
@@ -719,6 +742,7 @@ class Messages:
                 it names and a bare date is its whole UTC day. Omitted: "day".
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict with paginated DNC records. Each record carries
@@ -756,6 +780,7 @@ class Messages:
             method="GET",
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
 
     def send_sms(
@@ -769,6 +794,7 @@ class Messages:
         filter_landlines_and_inactive_numbers: bool = False,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Send an SMS message to one or more recipient phone numbers.
 
@@ -789,6 +815,7 @@ class Messages:
             filter_landlines_and_inactive_numbers: Whether to filter out landline and inactive numbers before sending.
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict. The payload reports the send outcome with three fields so
@@ -826,6 +853,7 @@ class Messages:
             body=body,
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
 
     def send_p2p(
@@ -839,6 +867,7 @@ class Messages:
         use_signal_house_shortlinks: bool | None = None,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Send a P2P message via Rogue Mobile SMPP.
 
@@ -857,6 +886,7 @@ class Messages:
                 sent verbatim (bring-your-own spinner). Defaults to true.
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict.
@@ -886,6 +916,7 @@ class Messages:
             body=body,
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
 
     def get_p2p_batch(
@@ -894,6 +925,7 @@ class Messages:
         *,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Get the details of a P2P batch by its ID.
 
@@ -901,6 +933,7 @@ class Messages:
             batch_id: The ID of the P2P batch to retrieve.
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict.
@@ -915,6 +948,7 @@ class Messages:
             method="GET",
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
 
     def get_delivery_reports(
@@ -923,6 +957,7 @@ class Messages:
         *,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Fetch the latest upstream carrier delivery report for a set of messages by ID.
 
@@ -933,6 +968,7 @@ class Messages:
             message_ids: The message IDs to fetch carrier delivery reports for (1-100).
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict containing an array of carrier delivery reports.
@@ -947,6 +983,7 @@ class Messages:
             body={"messageIds": message_ids},
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
 
     def send_mms(
@@ -963,6 +1000,7 @@ class Messages:
         images: list[BinaryIO | tuple] | None = None,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Send an MMS message to one or more recipients, with optional media attachments.
 
@@ -993,6 +1031,7 @@ class Messages:
                     or a tuple of (filename, file_object, content_type).
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict.
@@ -1041,6 +1080,7 @@ class Messages:
             files=files_list if files_list else None,
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
 
     def send_group_message(
@@ -1057,6 +1097,7 @@ class Messages:
         images: list[BinaryIO | tuple] | None = None,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Send a group MMS message to one or more recipients, with optional media attachments.
 
@@ -1083,6 +1124,7 @@ class Messages:
                     or a tuple of (filename, file_object, content_type).
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict.
@@ -1131,6 +1173,7 @@ class Messages:
             files=files_list if files_list else None,
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
 
     def carrier_id_lookup(
@@ -1139,6 +1182,7 @@ class Messages:
         *,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Look up the carrier for a phone number. Always fresh (not cached). Billed per request.
 
@@ -1146,6 +1190,7 @@ class Messages:
             phone_number: The phone number to look up (10+ digits, no + prefix).
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict with carrier information.
@@ -1160,4 +1205,5 @@ class Messages:
             body={"phoneNumber": phone_number},
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )

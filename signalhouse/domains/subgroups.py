@@ -24,6 +24,7 @@ class Subgroups:
         limit: int | None = None,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Get a list of subgroups with optional filters.
 
@@ -34,6 +35,7 @@ class Subgroups:
             limit: The number of items per page.
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict.
@@ -49,6 +51,7 @@ class Subgroups:
             method="GET",
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
 
     def get_subgroup_counts(
@@ -60,6 +63,7 @@ class Subgroups:
         offset: int | None = None,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Get resource counts grouped by subgroup ID.
 
@@ -67,7 +71,7 @@ class Subgroups:
         is restricted to its JWT group scope.
         """
         query_string = self._sdk._get_query_string({"groupId": group_id, "subgroupId": subgroup_id, "limit": limit, "offset": offset})
-        return self._sdk._request(f"/subgroup/counts{query_string}", method="GET", token=token, headers=headers)
+        return self._sdk._request(f"/subgroup/counts{query_string}", method="GET", token=token, headers=headers, idempotency_key=idempotency_key)
 
     def create_subgroup(
         self,
@@ -75,6 +79,7 @@ class Subgroups:
         *,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Create a new subgroup with the specified subgroup data.
 
@@ -85,6 +90,7 @@ class Subgroups:
                 admin, developer, or billing role.
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict.
@@ -99,6 +105,7 @@ class Subgroups:
             body=subgroup_data,
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
 
     def update_subgroup(
@@ -108,6 +115,7 @@ class Subgroups:
         *,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Update an existing subgroup with the specified data.
 
@@ -118,6 +126,7 @@ class Subgroups:
                 signalhouse_admin, signalhouse_user, api, admin, developer, or billing role.
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict.
@@ -133,6 +142,7 @@ class Subgroups:
             body=update_data,
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
 
     def delete_subgroup(
@@ -141,6 +151,7 @@ class Subgroups:
         *,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Delete a subgroup by its ID (mark as inactive).
 
@@ -148,6 +159,7 @@ class Subgroups:
             id: The ID of the subgroup to delete.
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict.
@@ -162,4 +174,5 @@ class Subgroups:
             method="DELETE",
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )

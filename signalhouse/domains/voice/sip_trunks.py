@@ -23,10 +23,11 @@ class SipTrunks:
         *,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """List all SIP trunks for the current account. ``GET /voice/sip-trunks``."""
         return self._sdk._request(
-            "/voice/sip-trunks", method="GET", token=token, headers=headers,
+            "/voice/sip-trunks", method="GET", token=token, headers=headers, idempotency_key=idempotency_key,
         )
 
     def get(
@@ -35,12 +36,13 @@ class SipTrunks:
         *,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Get a single SIP trunk by ID. ``GET /voice/sip-trunks/:id``."""
         self._sdk._require({"id": id})
         safe_id = quote(str(id), safe="")
         return self._sdk._request(
-            f"/voice/sip-trunks/{safe_id}", method="GET", token=token, headers=headers,
+            f"/voice/sip-trunks/{safe_id}", method="GET", token=token, headers=headers, idempotency_key=idempotency_key,
         )
 
     def create(
@@ -49,6 +51,7 @@ class SipTrunks:
         *,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Create a SIP trunk. ``POST /voice/sip-trunks``.
 
@@ -59,7 +62,7 @@ class SipTrunks:
         """
         self._sdk._require({"trunkData": trunk_data})
         return self._sdk._request(
-            "/voice/sip-trunks", method="POST", body=trunk_data, token=token, headers=headers,
+            "/voice/sip-trunks", method="POST", body=trunk_data, token=token, headers=headers, idempotency_key=idempotency_key,
         )
 
     def update(
@@ -69,12 +72,13 @@ class SipTrunks:
         *,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Update a SIP trunk. ``PATCH /voice/sip-trunks/:id``."""
         self._sdk._require({"id": id, "updateData": update_data})
         safe_id = quote(str(id), safe="")
         return self._sdk._request(
-            f"/voice/sip-trunks/{safe_id}", method="PATCH", body=update_data, token=token, headers=headers,
+            f"/voice/sip-trunks/{safe_id}", method="PATCH", body=update_data, token=token, headers=headers, idempotency_key=idempotency_key,
         )
 
     def delete(
@@ -83,12 +87,13 @@ class SipTrunks:
         *,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Delete a SIP trunk. ``DELETE /voice/sip-trunks/:id``."""
         self._sdk._require({"id": id})
         safe_id = quote(str(id), safe="")
         return self._sdk._request(
-            f"/voice/sip-trunks/{safe_id}", method="DELETE", token=token, headers=headers,
+            f"/voice/sip-trunks/{safe_id}", method="DELETE", token=token, headers=headers, idempotency_key=idempotency_key,
         )
 
     def toggle_active(
@@ -97,12 +102,13 @@ class SipTrunks:
         *,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Toggle a trunk's active/inactive status. ``POST /voice/sip-trunks/:id/toggle-active``."""
         self._sdk._require({"id": id})
         safe_id = quote(str(id), safe="")
         return self._sdk._request(
-            f"/voice/sip-trunks/{safe_id}/toggle-active", method="POST", token=token, headers=headers,
+            f"/voice/sip-trunks/{safe_id}/toggle-active", method="POST", token=token, headers=headers, idempotency_key=idempotency_key,
         )
 
     def regenerate_password(
@@ -111,6 +117,7 @@ class SipTrunks:
         *,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Regenerate the SIP password for a REGISTRATION-type trunk.
 
@@ -120,7 +127,7 @@ class SipTrunks:
         self._sdk._require({"id": id})
         safe_id = quote(str(id), safe="")
         return self._sdk._request(
-            f"/voice/sip-trunks/{safe_id}/regenerate-password", method="POST", token=token, headers=headers,
+            f"/voice/sip-trunks/{safe_id}/regenerate-password", method="POST", token=token, headers=headers, idempotency_key=idempotency_key,
         )
 
     def assign_numbers(
@@ -130,6 +137,7 @@ class SipTrunks:
         *,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Assign phone numbers to a SIP trunk for outbound caller ID / inbound routing.
 
@@ -144,6 +152,7 @@ class SipTrunks:
             body={"phoneNumbers": phone_numbers},
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
 
     def unassign_numbers(
@@ -153,6 +162,7 @@ class SipTrunks:
         *,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Unassign phone numbers from a SIP trunk.
 
@@ -167,6 +177,7 @@ class SipTrunks:
             body={"phoneNumbers": phone_numbers},
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
 
     def get_pops(
@@ -174,8 +185,9 @@ class SipTrunks:
         *,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """List available SIP POPs (Points of Presence). ``GET /voice/sip-trunks/pops``."""
         return self._sdk._request(
-            "/voice/sip-trunks/pops", method="GET", token=token, headers=headers,
+            "/voice/sip-trunks/pops", method="GET", token=token, headers=headers, idempotency_key=idempotency_key,
         )

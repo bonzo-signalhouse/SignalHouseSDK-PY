@@ -19,12 +19,14 @@ class TicketsAdmin:
         *,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Load Jira form metadata (issue types, priorities, active sprint, field IDs). Staff-only.
 
         Args:
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict with Jira form metadata.
@@ -34,6 +36,7 @@ class TicketsAdmin:
             method="GET",
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
 
     def search_jira_epics(
@@ -42,6 +45,7 @@ class TicketsAdmin:
         query: str | None = None,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Search open SHGHL epics for the parent picker. Staff-only.
 
@@ -49,6 +53,7 @@ class TicketsAdmin:
             query: Optional epic summary/key filter.
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict with `{ epics: [...] }`.
@@ -59,6 +64,7 @@ class TicketsAdmin:
             method="GET",
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
 
     def search_jira_parent_issues(
@@ -67,6 +73,7 @@ class TicketsAdmin:
         query: str | None = None,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Search open non-Epic, non-Subtask issues for the Subtask parent picker. Staff-only.
 
@@ -74,6 +81,7 @@ class TicketsAdmin:
             query: Optional issue summary/key filter.
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict with `{ issues: [...] }`.
@@ -84,6 +92,7 @@ class TicketsAdmin:
             method="GET",
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
 
     def search_jira_assignees(
@@ -92,6 +101,7 @@ class TicketsAdmin:
         query: str | None = None,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Search assignable Jira users for the assignee picker. Staff-only.
 
@@ -99,6 +109,7 @@ class TicketsAdmin:
             query: Partial name or email.
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict with `{ users: [...] }`.
@@ -109,6 +120,7 @@ class TicketsAdmin:
             method="GET",
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
 
     def search_jira_labels(
@@ -117,6 +129,7 @@ class TicketsAdmin:
         query: str | None = None,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Suggest Jira labels matching a query. Staff-only.
 
@@ -124,6 +137,7 @@ class TicketsAdmin:
             query: Partial label text.
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict with `{ labels: [...] }`.
@@ -134,6 +148,7 @@ class TicketsAdmin:
             method="GET",
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
 
     def create_jira_ticket(
@@ -142,6 +157,7 @@ class TicketsAdmin:
         *,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Create a Jira ticket from the admin customer ticket form. Staff-only.
 
@@ -150,6 +166,7 @@ class TicketsAdmin:
                   priorityId, and summary.
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict with created ticket summary.
@@ -164,6 +181,7 @@ class TicketsAdmin:
             body=data,
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
 
 

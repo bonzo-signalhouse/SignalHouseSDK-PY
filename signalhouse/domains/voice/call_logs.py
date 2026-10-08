@@ -43,6 +43,7 @@ class CallLogs:
         order: str | None = None,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """List call logs for the current account, paginated and filterable.
         ``GET /voice/api/v1/call-logs``.
@@ -74,6 +75,7 @@ class CallLogs:
             order: Sort order (``asc`` or ``desc``, default ``desc``).
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict wrapping
@@ -102,6 +104,7 @@ class CallLogs:
             method="GET",
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
 
     def get(
@@ -110,13 +113,14 @@ class CallLogs:
         *,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Get a single call log by its UUID or callId.
         ``GET /voice/api/v1/call-logs/:id``. Returns ``{ success, data: {...} }``."""
         self._sdk._require({"id": id})
         safe_id = quote(str(id), safe="")
         return self._sdk._request(
-            f"/voice/api/v1/call-logs/{safe_id}", method="GET", token=token, headers=headers,
+            f"/voice/api/v1/call-logs/{safe_id}", method="GET", token=token, headers=headers, idempotency_key=idempotency_key,
         )
 
     def get_recording(
@@ -125,6 +129,7 @@ class CallLogs:
         *,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Get a short-TTL presigned playback URL for a call's recording.
 
@@ -135,7 +140,7 @@ class CallLogs:
         self._sdk._require({"id": id})
         safe_id = quote(str(id), safe="")
         return self._sdk._request(
-            f"/voice/api/v1/call-logs/{safe_id}/recording", method="GET", token=token, headers=headers,
+            f"/voice/api/v1/call-logs/{safe_id}/recording", method="GET", token=token, headers=headers, idempotency_key=idempotency_key,
         )
 
     def mark_voicemail_read(
@@ -145,6 +150,7 @@ class CallLogs:
         *,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Mark a call's voicemail as read or unread.
 
@@ -157,6 +163,7 @@ class CallLogs:
             read: Whether the voicemail is read. Defaults to ``True``.
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
         """
         self._sdk._require({"id": id})
         safe_id = quote(str(id), safe="")
@@ -166,4 +173,5 @@ class CallLogs:
             body={"read": read},
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )

@@ -25,6 +25,7 @@ class Agents:
         *,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """List the voices an agent can be configured to speak with.
 
@@ -36,12 +37,13 @@ class Agents:
         Args:
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict whose data is a list of voices, each
             {voiceId, name, description, previewUrl, gender, accent, age, useCase, language}.
         """
-        return self._sdk._request("/agent/voices", method="GET", token=token, headers=headers)
+        return self._sdk._request("/agent/voices", method="GET", token=token, headers=headers, idempotency_key=idempotency_key)
 
     def get_agent_profiles(
         self,
@@ -52,6 +54,7 @@ class Agents:
         limit: int | None = None,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """List the agent profiles under a group.
 
@@ -64,6 +67,7 @@ class Agents:
             limit: The number of items per page.
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict.
@@ -83,6 +87,7 @@ class Agents:
             method="GET",
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
 
     def get_agent_profile(
@@ -91,6 +96,7 @@ class Agents:
         *,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Get a single agent profile by ID.
 
@@ -100,6 +106,7 @@ class Agents:
             agent_profile_id: The ID of the agent profile to fetch.
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict.
@@ -114,6 +121,7 @@ class Agents:
             method="GET",
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
 
     def create_agent_profile(
@@ -122,6 +130,7 @@ class Agents:
         *,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Create a new agent profile.
 
@@ -140,6 +149,7 @@ class Agents:
                 not here.
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict.
@@ -154,6 +164,7 @@ class Agents:
             body=profile_data,
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
 
     def update_agent_profile(
@@ -163,6 +174,7 @@ class Agents:
         *,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Update an existing agent profile.
 
@@ -180,6 +192,7 @@ class Agents:
                 not here.
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict.
@@ -195,6 +208,7 @@ class Agents:
             body=update_data,
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
 
     def delete_agent_profile(
@@ -203,6 +217,7 @@ class Agents:
         *,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Delete (inactivate) an agent profile by its ID.
 
@@ -212,6 +227,7 @@ class Agents:
             id: The ID of the agent profile to delete.
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict.
@@ -226,6 +242,7 @@ class Agents:
             method="DELETE",
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
 
     def send_agent_message(
@@ -238,6 +255,7 @@ class Agents:
         contact_identifier: str | None = None,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Send a message to an agent and get its reply (webchat / SMS).
 
@@ -255,6 +273,7 @@ class Agents:
             contact_identifier: The far-end identifier (webchat visitor id, sender number).
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict with conversationId, conversationSessionId,
@@ -283,6 +302,7 @@ class Agents:
             body=body,
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
 
     def start_conversation(
@@ -295,6 +315,7 @@ class Agents:
         metadata: dict[str, Any] | None = None,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Start a conversation without sending a message.
 
@@ -312,6 +333,7 @@ class Agents:
             metadata: Arbitrary metadata stored with the conversation.
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             The created conversation, including conversationId and conversationSessionId.
@@ -327,7 +349,7 @@ class Agents:
             body["callId"] = call_id
         if metadata is not None:
             body["metadata"] = metadata
-        return self._sdk._request("/agent/conversations", method="POST", body=body, token=token, headers=headers)
+        return self._sdk._request("/agent/conversations", method="POST", body=body, token=token, headers=headers, idempotency_key=idempotency_key)
 
     def get_conversation(
         self,
@@ -337,6 +359,7 @@ class Agents:
         limit: int | None = None,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Read one conversation with a page of its messages, in order.
 
@@ -351,6 +374,7 @@ class Agents:
             limit: Messages per page; defaults to 100, capped at 500.
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             A one-element list with the conversation and its messages.
@@ -361,7 +385,7 @@ class Agents:
         self._sdk._require({"conversationId": conversation_id})
         safe_id = quote(str(conversation_id), safe="")
         query_string = self._sdk._get_query_string({"page": page, "limit": limit})
-        return self._sdk._request(f"/agent/conversations/{safe_id}{query_string}", method="GET", token=token, headers=headers)
+        return self._sdk._request(f"/agent/conversations/{safe_id}{query_string}", method="GET", token=token, headers=headers, idempotency_key=idempotency_key)
 
     def append_conversation_message(
         self,
@@ -376,6 +400,7 @@ class Agents:
         barge_in_occurred: bool | None = None,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Append one message to a conversation.
 
@@ -396,6 +421,7 @@ class Agents:
             barge_in_occurred: Whether the far end talked over this turn.
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             The persisted message.
@@ -418,7 +444,7 @@ class Agents:
             body["latencyMs"] = latency_ms
         if barge_in_occurred is not None:
             body["bargeInOccurred"] = barge_in_occurred
-        return self._sdk._request(f"/agent/conversations/{safe_id}/messages", method="POST", body=body, token=token, headers=headers)
+        return self._sdk._request(f"/agent/conversations/{safe_id}/messages", method="POST", body=body, token=token, headers=headers, idempotency_key=idempotency_key)
 
     def end_conversation(
         self,
@@ -428,6 +454,7 @@ class Agents:
         metadata: dict[str, Any] | None = None,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """End a conversation, closing its open session.
 
@@ -443,6 +470,7 @@ class Agents:
             metadata: Metadata merged onto the conversation.
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             The ended conversation.
@@ -457,7 +485,7 @@ class Agents:
             body["status"] = status
         if metadata is not None:
             body["metadata"] = metadata
-        return self._sdk._request(f"/agent/conversations/{safe_id}", method="PUT", body=body, token=token, headers=headers)
+        return self._sdk._request(f"/agent/conversations/{safe_id}", method="PUT", body=body, token=token, headers=headers, idempotency_key=idempotency_key)
 
     def get_agent_channel_settings(
         self,
@@ -465,6 +493,7 @@ class Agents:
         *,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """List an agent's per-channel settings.
 
@@ -474,6 +503,7 @@ class Agents:
             agent_profile_id: The agent whose channel settings to list.
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict.
@@ -488,6 +518,7 @@ class Agents:
             method="GET",
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
 
     def get_agent_channel_setting(
@@ -497,6 +528,7 @@ class Agents:
         *,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Get a single per-channel setting for an agent.
 
@@ -507,6 +539,7 @@ class Agents:
             channel: The channel — "webchat", "sms", or "voice".
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict.
@@ -522,6 +555,7 @@ class Agents:
             method="GET",
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
 
     def upsert_agent_channel_setting(
@@ -532,6 +566,7 @@ class Agents:
         *,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Create or update (upsert) an agent's per-channel setting.
 
@@ -559,6 +594,7 @@ class Agents:
                 backgroundSound ({"preset": str, "volume": 0.01-1} | None).
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict.
@@ -575,6 +611,7 @@ class Agents:
             body=setting_data or {},
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
 
     def delete_agent_channel_setting(
@@ -584,6 +621,7 @@ class Agents:
         *,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Delete an agent's per-channel setting.
 
@@ -594,6 +632,7 @@ class Agents:
             channel: The channel — "webchat", "sms", or "voice".
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict.
@@ -609,6 +648,7 @@ class Agents:
             method="DELETE",
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
 
     def get_agent_deployments(
@@ -617,6 +657,7 @@ class Agents:
         *,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """List a group-level agent's deployments to subgroups.
 
@@ -626,6 +667,7 @@ class Agents:
             agent_profile_id: The agent whose deployments to list.
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict. Each deployment carries agentDeploymentId,
@@ -643,6 +685,7 @@ class Agents:
             method="GET",
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
 
     def upsert_agent_deployment(
@@ -653,6 +696,7 @@ class Agents:
         *,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Deploy a group-level agent to a subgroup, or change that deployment (upsert).
 
@@ -668,6 +712,7 @@ class Agents:
                 inherits the profile default) and enabled (bool, defaults to True).
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict with the created or updated deployment.
@@ -684,6 +729,7 @@ class Agents:
             body=deployment_data or {},
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
 
     def delete_agent_deployment(
@@ -693,6 +739,7 @@ class Agents:
         *,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Remove an agent's deployment from a subgroup.
 
@@ -703,6 +750,7 @@ class Agents:
             subgroup_id: The subgroup to remove the deployment from.
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict with the removed deployment.
@@ -718,6 +766,403 @@ class Agents:
             method="DELETE",
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
+        )
+
+    def get_agent_endpoints(
+        self,
+        *,
+        group_id: str,
+        subgroup_id: str | None = None,
+        agent_profile_id: str | None = None,
+        channel: str | None = None,
+        token: str | None = None,
+        headers: dict[str, str] | None = None,
+    ) -> dict[str, Any]:
+        """List the endpoint bindings (which agent answers which number) in a group.
+
+        Allowed roles: api, admin, developer, billing, user.
+
+        Args:
+            group_id: The group whose bindings to list (required).
+            subgroup_id: Narrow to one subgroup's bindings.
+            agent_profile_id: Narrow to one agent's bindings.
+            channel: Narrow to one channel ("sms").
+            token: Optional bearer token for authentication.
+            headers: Additional headers to include in the request.
+
+        Returns:
+            Standardized response dict whose data is a list of bindings, ordered by
+            number. Each binding carries agentEndpointId, groupId, subgroupId,
+            channel, endpointType, endpointValue, agentProfileId, answerMode,
+            overrides, enabled, createdAt, and updatedAt.
+
+        Raises:
+            SignalHouseValidationError: If group_id is missing.
+        """
+        self._sdk._require({"groupId": group_id})
+        query_string = self._sdk._get_query_string({
+            "groupId": group_id,
+            "subgroupId": subgroup_id,
+            "agentProfileId": agent_profile_id,
+            "channel": channel,
+        })
+        return self._sdk._request(
+            f"/agent/endpoints{query_string}",
+            method="GET",
+            token=token,
+            headers=headers,
+        )
+
+    def upsert_agent_endpoint(
+        self,
+        channel: str,
+        endpoint_value: str,
+        endpoint_data: dict[str, Any],
+        *,
+        token: str | None = None,
+        headers: dict[str, str] | None = None,
+    ) -> dict[str, Any]:
+        """Assign an agent to answer a number (upsert keyed by channel + number).
+
+        Assigning again replaces the previous agent, so a number has one agent
+        per channel. v1 binds SMS numbers only.
+
+        Allowed roles: api, admin, developer.
+
+        Args:
+            channel: The channel to bind; must be "sms".
+            endpoint_value: The phone number: 10 to 15 digits, country code
+                included, no "+".
+            endpoint_data: agentProfileId (required; the agent must be active, in
+                the number's group, and either belong to the number's subgroup or
+                be a group-level agent with an enabled deployment there) and
+                answerMode (optional; "all_inbound", the default).
+            token: Optional bearer token for authentication.
+            headers: Additional headers to include in the request.
+
+        Returns:
+            Standardized response dict with the created or updated binding.
+
+        Raises:
+            SignalHouseValidationError: If channel, endpoint_value, or endpoint_data's agentProfileId is missing.
+        """
+        self._sdk._require({
+            "channel": channel,
+            "endpointValue": endpoint_value,
+            "agentProfileId": (endpoint_data or {}).get("agentProfileId"),
+        })
+        safe_channel = quote(str(channel), safe="")
+        safe_endpoint_value = quote(str(endpoint_value), safe="")
+        return self._sdk._request(
+            f"/agent/endpoints/{safe_channel}/{safe_endpoint_value}",
+            method="PUT",
+            body=endpoint_data,
+            token=token,
+            headers=headers,
+        )
+
+    def delete_agent_endpoint(
+        self,
+        channel: str,
+        endpoint_value: str,
+        *,
+        token: str | None = None,
+        headers: dict[str, str] | None = None,
+    ) -> dict[str, Any]:
+        """Remove the agent assigned to a number.
+
+        Allowed roles: api, admin, developer.
+
+        Args:
+            channel: The bound channel; must be "sms".
+            endpoint_value: The phone number: digits only, country code included, no "+".
+            token: Optional bearer token for authentication.
+            headers: Additional headers to include in the request.
+
+        Returns:
+            Standardized response dict with the removed binding.
+
+        Raises:
+            SignalHouseValidationError: If channel or endpoint_value is missing.
+        """
+        self._sdk._require({"channel": channel, "endpointValue": endpoint_value})
+        safe_channel = quote(str(channel), safe="")
+        safe_endpoint_value = quote(str(endpoint_value), safe="")
+        return self._sdk._request(
+            f"/agent/endpoints/{safe_channel}/{safe_endpoint_value}",
+            method="DELETE",
+            token=token,
+            headers=headers,
+        )
+
+    def get_agent_reply_drafts(
+        self,
+        *,
+        group_id: str,
+        subgroup_id: str | None = None,
+        agent_profile_id: str | None = None,
+        status: str | None = None,
+        page: int | None = None,
+        limit: int | None = None,
+        token: str | None = None,
+        headers: dict[str, str] | None = None,
+    ) -> dict[str, Any]:
+        """List held agent replies (the Pending Replies queue) in a group, newest first.
+
+        Allowed roles: api, admin, developer, billing, user.
+
+        Args:
+            group_id: The group whose drafts to list (required).
+            subgroup_id: Narrow to one subgroup.
+            agent_profile_id: Narrow to one agent.
+            status: Narrow to one status: "pending", "sending", "sent",
+                "rejected" or "failed".
+            page: The page number for pagination.
+            limit: Items per page (default 25, max 500).
+            token: Optional bearer token for authentication.
+            headers: Additional headers to include in the request.
+
+        Returns:
+            Standardized response dict whose data is a list of drafts, newest
+            first. Each draft carries agentReplyDraftId, groupId, subgroupId,
+            agentProfileId, conversationId, channel, endpointValue,
+            contactPhoneNumber, inboundText, draftText, sentText, reason,
+            status, decidedBy, decidedAt, sentMessageId, deliveredBy
+            ("signalhouse" or "external"; None until decided), failureReason
+            ("delivery_unconfirmed" or None), claimId (the current claim's
+            id; None until claimed), createdAt, and updatedAt.
+
+        Raises:
+            SignalHouseValidationError: If group_id is missing.
+        """
+        self._sdk._require({"groupId": group_id})
+        query_string = self._sdk._get_query_string({
+            "groupId": group_id,
+            "subgroupId": subgroup_id,
+            "agentProfileId": agent_profile_id,
+            "status": status,
+            "page": page,
+            "limit": limit,
+        })
+        return self._sdk._request(
+            f"/agent/drafts{query_string}",
+            method="GET",
+            token=token,
+            headers=headers,
+        )
+
+    def approve_agent_reply_draft(
+        self,
+        agent_reply_draft_id: str,
+        *,
+        text: str | None = None,
+        token: str | None = None,
+        headers: dict[str, str] | None = None,
+    ) -> dict[str, Any]:
+        """Approve a held agent reply and send it from the agent's number.
+
+        The reply goes through the normal SMS send path, so opt-out and billing
+        apply; the draft comes back "failed" when the send path accepted
+        nothing. A draft that is no longer pending returns 409.
+
+        Allowed roles: api, admin, developer, billing, user.
+
+        Args:
+            agent_reply_draft_id: The draft to approve.
+            text: Replacement text when a person edited the reply (1 to 10000
+                characters). Omit to send the agent's draft as written.
+            token: Optional bearer token for authentication.
+            headers: Additional headers to include in the request.
+
+        Returns:
+            Standardized response dict with the draft, now "sent" (or "failed").
+
+        Raises:
+            SignalHouseValidationError: If agent_reply_draft_id is missing.
+        """
+        self._sdk._require({"agentReplyDraftId": agent_reply_draft_id})
+        safe_id = quote(str(agent_reply_draft_id), safe="")
+        body: dict[str, Any] = {} if text is None else {"text": text}
+        return self._sdk._request(
+            f"/agent/drafts/{safe_id}/approve",
+            method="POST",
+            body=body,
+            token=token,
+            headers=headers,
+        )
+
+    def reject_agent_reply_draft(
+        self,
+        agent_reply_draft_id: str,
+        *,
+        token: str | None = None,
+        headers: dict[str, str] | None = None,
+    ) -> dict[str, Any]:
+        """Reject a held agent reply so it is never sent.
+
+        A draft that is no longer pending returns 409.
+
+        Allowed roles: api, admin, developer, billing, user.
+
+        Args:
+            agent_reply_draft_id: The draft to reject.
+            token: Optional bearer token for authentication.
+            headers: Additional headers to include in the request.
+
+        Returns:
+            Standardized response dict with the rejected draft.
+
+        Raises:
+            SignalHouseValidationError: If agent_reply_draft_id is missing.
+        """
+        self._sdk._require({"agentReplyDraftId": agent_reply_draft_id})
+        safe_id = quote(str(agent_reply_draft_id), safe="")
+        return self._sdk._request(
+            f"/agent/drafts/{safe_id}/reject",
+            method="POST",
+            token=token,
+            headers=headers,
+        )
+
+    def claim_agent_reply_draft(
+        self,
+        agent_reply_draft_id: str,
+        *,
+        text: str | None = None,
+        token: str | None = None,
+        headers: dict[str, str] | None = None,
+    ) -> dict[str, Any]:
+        """Claim a held agent reply for delivery through your own channel.
+
+        Nothing is sent: the draft becomes "sending" with deliveredBy
+        "external", sentText and a new claimId set, and you then report the
+        outcome with complete_agent_reply_draft or release_agent_reply_draft,
+        passing that claimId back. The claim
+        means two approvals can never both deliver. A draft that is no longer
+        pending returns 409; one whose number has left its subgroup returns
+        400 and is closed as failed.
+
+        Allowed roles: api, admin, developer, billing, user.
+
+        Args:
+            agent_reply_draft_id: The draft to claim.
+            text: Replacement text when a person edited the reply (1 to 10000
+                characters). Omit to claim the agent's draft as written.
+            token: Optional bearer token for authentication.
+            headers: Additional headers to include in the request.
+
+        Returns:
+            Standardized response dict with the claimed draft, including its
+            claimId.
+
+        Raises:
+            SignalHouseValidationError: If agent_reply_draft_id is missing.
+        """
+        self._sdk._require({"agentReplyDraftId": agent_reply_draft_id})
+        safe_id = quote(str(agent_reply_draft_id), safe="")
+        body: dict[str, Any] = {} if text is None else {"text": text}
+        return self._sdk._request(
+            f"/agent/drafts/{safe_id}/claim",
+            method="POST",
+            body=body,
+            token=token,
+            headers=headers,
+        )
+
+    def complete_agent_reply_draft(
+        self,
+        agent_reply_draft_id: str,
+        claim_id: str,
+        *,
+        external_message_id: str | None = None,
+        token: str | None = None,
+        headers: dict[str, str] | None = None,
+    ) -> dict[str, Any]:
+        """Mark a claimed agent reply sent once your channel accepted it.
+
+        Only the claim named by claim_id can be completed; anything else
+        returns 409. It is also accepted after an unfinished claim was closed
+        as "failed" with failureReason "delivery_unconfirmed", which it turns
+        into "sent".
+
+        Allowed roles: api, admin, developer, billing, user.
+
+        Args:
+            agent_reply_draft_id: The claimed draft.
+            claim_id: The claim being completed, as returned by
+                claim_agent_reply_draft.
+            external_message_id: Your channel's id for the sent message (up to
+                256 characters), stored as sentMessageId.
+            token: Optional bearer token for authentication.
+            headers: Additional headers to include in the request.
+
+        Returns:
+            Standardized response dict with the draft, now "sent".
+
+        Raises:
+            SignalHouseValidationError: If agent_reply_draft_id or claim_id is
+                missing.
+        """
+        self._sdk._require({"agentReplyDraftId": agent_reply_draft_id, "claimId": claim_id})
+        safe_id = quote(str(agent_reply_draft_id), safe="")
+        body: dict[str, Any] = {"claimId": claim_id}
+        if external_message_id is not None:
+            body["externalMessageId"] = external_message_id
+        return self._sdk._request(
+            f"/agent/drafts/{safe_id}/complete",
+            method="POST",
+            body=body,
+            token=token,
+            headers=headers,
+        )
+
+    def release_agent_reply_draft(
+        self,
+        agent_reply_draft_id: str,
+        claim_id: str,
+        *,
+        permanent: bool | None = None,
+        token: str | None = None,
+        headers: dict[str, str] | None = None,
+    ) -> dict[str, Any]:
+        """Give back a claim whose reply certainly did not go out.
+
+        The draft returns to "pending", or with permanent is closed as
+        "failed". If you cannot tell whether it went out, do not release it;
+        a claim left unfinished for 30 minutes is closed as failed with
+        failureReason "delivery_unconfirmed". Only the claim named by
+        claim_id can be released; anything else returns 409.
+
+        Allowed roles: api, admin, developer, billing, user.
+
+        Args:
+            agent_reply_draft_id: The claimed draft.
+            claim_id: The claim being released, as returned by
+                claim_agent_reply_draft.
+            permanent: True closes the draft as failed instead of returning it
+                to pending.
+            token: Optional bearer token for authentication.
+            headers: Additional headers to include in the request.
+
+        Returns:
+            Standardized response dict with the draft, "pending" again or "failed".
+
+        Raises:
+            SignalHouseValidationError: If agent_reply_draft_id or claim_id is
+                missing.
+        """
+        self._sdk._require({"agentReplyDraftId": agent_reply_draft_id, "claimId": claim_id})
+        safe_id = quote(str(agent_reply_draft_id), safe="")
+        body: dict[str, Any] = {"claimId": claim_id}
+        if permanent is not None:
+            body["permanent"] = permanent
+        return self._sdk._request(
+            f"/agent/drafts/{safe_id}/release",
+            method="POST",
+            body=body,
+            token=token,
+            headers=headers,
         )
 
     def publish_agent_profile(
@@ -726,6 +1171,7 @@ class Agents:
         *,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Publish an agent profile.
 
@@ -739,6 +1185,7 @@ class Agents:
             agent_profile_id: The agent profile to publish.
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict with the published agent profile.
@@ -753,6 +1200,7 @@ class Agents:
             method="POST",
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
 
     def unpublish_agent_profile(
@@ -761,6 +1209,7 @@ class Agents:
         *,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Return an agent profile to draft (publishStatus "draft").
 
@@ -770,6 +1219,7 @@ class Agents:
             agent_profile_id: The agent profile to unpublish.
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict with the unpublished agent profile.
@@ -784,6 +1234,7 @@ class Agents:
             method="POST",
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
 
     def get_tenant_ai_settings(
@@ -793,6 +1244,7 @@ class Agents:
         subgroup_id: str | None = None,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Read the tenant AI settings for a scope (group, or a subgroup within it).
 
@@ -805,6 +1257,7 @@ class Agents:
             subgroup_id: The subgroup; omit for the group-level settings.
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict.
@@ -819,6 +1272,7 @@ class Agents:
             method="GET",
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
 
     def upsert_tenant_ai_settings(
@@ -829,6 +1283,7 @@ class Agents:
         settings_data: dict[str, Any] | None = None,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Create or update (upsert) the tenant AI settings for a scope.
 
@@ -843,6 +1298,7 @@ class Agents:
                 businessHours (list of {day, closed, open, close}), afterHoursMessage (str).
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict.
@@ -858,6 +1314,7 @@ class Agents:
             body=settings_data or {},
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
 
     def delete_tenant_ai_settings(
@@ -867,6 +1324,7 @@ class Agents:
         subgroup_id: str | None = None,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Delete the tenant AI settings for a scope.
 
@@ -877,6 +1335,7 @@ class Agents:
             subgroup_id: The subgroup; omit for the group-level settings.
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict.
@@ -891,6 +1350,7 @@ class Agents:
             method="DELETE",
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
 
     def get_knowledge_items(
@@ -903,6 +1363,7 @@ class Agents:
         limit: int | None = None,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """List the knowledge-base items an agent can answer from (RAG).
 
@@ -919,6 +1380,7 @@ class Agents:
             limit: Items per page (max 100; server default 25).
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict.
@@ -933,6 +1395,7 @@ class Agents:
             method="GET",
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
 
     def get_knowledge_item(
@@ -941,6 +1404,7 @@ class Agents:
         *,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Get a single knowledge item by ID.
 
@@ -950,6 +1414,7 @@ class Agents:
             knowledge_item_id: The ID of the knowledge item to fetch.
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict.
@@ -964,6 +1429,7 @@ class Agents:
             method="GET",
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
 
     def create_knowledge_item(
@@ -972,6 +1438,7 @@ class Agents:
         *,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Create a knowledge item. The raw text is stored; Atlas Vector Search owns the embedding.
 
@@ -984,6 +1451,7 @@ class Agents:
                 "document" | "import"), enabled (bool), metadata (dict | None).
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict.
@@ -998,6 +1466,7 @@ class Agents:
             body=item_data,
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
 
     def update_knowledge_item(
@@ -1007,6 +1476,7 @@ class Agents:
         *,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Update a knowledge item. The scope (group/subgroup/agent) is immutable.
 
@@ -1017,6 +1487,7 @@ class Agents:
             update_data: The fields to update: title, text, source, enabled, metadata.
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict.
@@ -1032,6 +1503,7 @@ class Agents:
             body=update_data,
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
 
     def delete_knowledge_item(
@@ -1040,6 +1512,7 @@ class Agents:
         *,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Delete a knowledge item by its ID.
 
@@ -1049,6 +1522,7 @@ class Agents:
             id: The ID of the knowledge item to delete.
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict.
@@ -1063,6 +1537,7 @@ class Agents:
             method="DELETE",
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
 
     def get_agent_tools(
@@ -1076,6 +1551,7 @@ class Agents:
         limit: int | None = None,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """List the tools defined under a group (webhook, configured builtin, mcp).
 
@@ -1092,6 +1568,7 @@ class Agents:
             limit: Items per page (max 100; server default 25).
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict.
@@ -1106,6 +1583,7 @@ class Agents:
             method="GET",
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
 
     def get_agent_tool(
@@ -1114,6 +1592,7 @@ class Agents:
         *,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Get a single agent tool by ID. webhookAuth secrets are redacted.
 
@@ -1123,6 +1602,7 @@ class Agents:
             agent_tool_id: The ID of the tool to fetch.
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict.
@@ -1137,6 +1617,7 @@ class Agents:
             method="GET",
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
 
     def create_agent_tool(
@@ -1145,6 +1626,7 @@ class Agents:
         *,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Create an agent tool. A webhook tool's webhookUrl must be an https URL that does not
         target a private/internal address. webhookAuth is stored and never echoed back.
@@ -1163,6 +1645,7 @@ class Agents:
                 so you can verify the call and reject replays. Stored, never returned.
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict.
@@ -1177,6 +1660,7 @@ class Agents:
             body=tool_data,
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
 
     def update_agent_tool(
@@ -1186,6 +1670,7 @@ class Agents:
         *,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Update an agent tool. The scope is immutable; a supplied webhookUrl is SSRF-checked.
 
@@ -1197,6 +1682,7 @@ class Agents:
                 parametersSchema, config, webhookUrl, webhookAuth, mcpServerUrl, channels, enabled.
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict.
@@ -1212,6 +1698,7 @@ class Agents:
             body=update_data,
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
 
     def delete_agent_tool(
@@ -1220,6 +1707,7 @@ class Agents:
         *,
         token: str | None = None,
         headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Delete an agent tool by its ID.
 
@@ -1229,6 +1717,7 @@ class Agents:
             id: The ID of the tool to delete.
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
             Standardized response dict.
@@ -1243,4 +1732,5 @@ class Agents:
             method="DELETE",
             token=token,
             headers=headers,
+            idempotency_key=idempotency_key,
         )
