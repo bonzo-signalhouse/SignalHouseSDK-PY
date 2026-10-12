@@ -286,7 +286,7 @@ class Messages:
                 with a 400 -- omit the parameter unless hour grain is wanted.
             breakdown: "carrier" or "carrierFamily". Adds a byBreakdown time × dimension series to the
                 response ({dimension, rows}: each row is one byDate bucket (_id) for one carrier or
-                carrier family (key), top 50 keys by volume, 10DLC only) and caps the span at 31 days.
+                carrier family (key), top 50 keys by volume, excluding P2P) and caps the span at 31 days.
                 Only accepted where the environment serves hourly analytics; elsewhere any value is rejected with a 400 -- omit the parameter unless it is wanted.
             date_bounds: Which contract binds start_date/end_date. "day": each bound is widened to its
                 whole UTC day. "exact": a timestamp is bound as the instant
@@ -412,7 +412,7 @@ class Messages:
         headers: dict[str, str] | None = None,
         idempotency_key: str | None = None,
     ) -> dict[str, Any]:
-        """Get filter dropdown options (subgroups, brands, campaigns, phone numbers) for the
+        """Get filter dropdown options (subgroups, brands, campaigns, phone numbers, carriers) for the
         Analytics page, scoped to a single group. Sourced from ClickHouse — only items with
         at least one message are returned.
 
@@ -425,10 +425,11 @@ class Messages:
             idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
 
         Returns:
-            Standardized response dict with subgroups, brands, campaigns, and phoneNumbers arrays.
+            Standardized response dict with subgroups, brands, campaigns, phoneNumbers, and carriers arrays.
             Each phone number carries type (TOLL_FREE, SHORT_CODE, ALPHANUMERIC, VIRTUAL_LONG_NUMBER, ...) and
             country (ISO-2), None when unknown: TOLL_FREE, SHORT_CODE and ALPHANUMERIC are channels by type; any
-            other US number is 10DLC and a non-US one is a Virtual Long Code.
+            other US number is 10DLC and a non-US one is a Virtual Long Code. carriers is a plain array of
+            carrier name strings.
         """
         query_string = self._sdk._get_query_string({
             "groupId": group_id,

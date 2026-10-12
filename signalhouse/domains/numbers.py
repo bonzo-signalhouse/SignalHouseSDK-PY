@@ -512,6 +512,7 @@ class Numbers:
         status: str | None = None,
         page: int | None = None,
         limit: int | None = None,
+        exclude_documents: bool | None = None,
         token: str | None = None,
         headers: dict[str, str] | None = None,
         idempotency_key: str | None = None,
@@ -526,6 +527,7 @@ class Numbers:
             status: Filter by status (PENDING, IN_PROGRESS, COMPLETED, REJECTED, CANCELLED).
             page: The page number for pagination (default: 1).
             limit: The number of items per page (default: 20).
+            exclude_documents: When True, leave signatureUrl and billingUrl out of each request (the inline LOA signature and billing statement). Fetch one request by ID to read them.
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
             idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
@@ -539,6 +541,8 @@ class Numbers:
             "status": status,
             "page": page,
             "limit": limit,
+            # urlencode would send Python's "True"; the API expects "true"/"false".
+            "excludeDocuments": None if exclude_documents is None else str(exclude_documents).lower(),
         })
         return self._sdk._request(
             f"/number/portin{query_string}",

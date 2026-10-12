@@ -346,9 +346,10 @@ NUMBERS  (signal_house.numbers)
     number_data: dict containing port-in request data (required).
 
   get_port_requests(*, group_id=None, phone_number=None, status=None,
-      page=None, limit=None, token=None, headers=None)
+      page=None, limit=None, exclude_documents=None, token=None, headers=None)
     Get port-in requests with optional filters (GET /number/portin).
-    All parameters are optional.
+    All parameters are optional. exclude_documents=True leaves signatureUrl
+    and billingUrl out of each request.
 
 
 SHORTLINKS  (signal_house.shortlinks)
@@ -732,6 +733,7 @@ get_analytics_filter_options returns each phone number with its type (TOLL_FREE,
 SHORT_CODE, ALPHANUMERIC, VIRTUAL_LONG_NUMBER, and older local-number spellings) and
 country (ISO-2), null when unknown. TOLL_FREE, SHORT_CODE and ALPHANUMERIC are channels
 by type; a US number of any other type is 10DLC and a non-US one is a Virtual Long Code.
+It also returns carriers, a plain array of carrier name strings.
 
 UK sending is SMS only, from a +44 virtual long code to GB mobile recipients; MMS
 and group MMS are unavailable. POST /message/estimate accepts a +44 sender
