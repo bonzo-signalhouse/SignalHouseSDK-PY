@@ -219,7 +219,9 @@ class Agents:
         headers: dict[str, str] | None = None,
         idempotency_key: str | None = None,
     ) -> dict[str, Any]:
-        """Delete (inactivate) an agent profile by its ID.
+        """Permanently delete an agent profile by its ID.
+
+        Permanently deletes the agent, its channel settings, and any tools and knowledge scoped to it, plus their provider-side counterparts. Tools and knowledge shared across the account are untouched. Conversation records survive — a transcript outlives the agent that produced it.
 
         Allowed roles: api, admin, developer.
 
@@ -591,7 +593,12 @@ class Agents:
                 (1-300, or -1 for no timeout), silenceEndCallSeconds (10-7200),
                 maxCallDurationSeconds (60-7200), allowGreetingInterruption (bool),
                 keyterms (list[str] the transcriber is biased toward), and
-                backgroundSound ({"preset": str, "volume": 0.01-1} | None).
+                backgroundSound ({"preset": str, "volume": 0.01-1} | None), and
+                workflow (the conversation workflow graph: "nodes" and "edges" keyed
+                dicts, plus optional "subgraphs" and "prevent_subagent_loops"; node
+                bodies are defined by the voice runtime and passed through as-is).
+                workflow is accepted on the voice channel only — sending one on
+                webchat or sms is a 400; None clears it.
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
             idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.

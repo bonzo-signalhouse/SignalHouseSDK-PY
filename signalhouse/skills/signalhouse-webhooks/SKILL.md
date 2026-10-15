@@ -17,14 +17,17 @@ description: >-
 **Deliveries to a webhook endpoint are signed.** Every endpoint created with `POST /webhook` gets a
 signing secret, returned in plaintext **exactly once**, as `signingSecret` in that create response.
 Every later read reports only `hasSigningSecret: true|false`. Store the secret at creation; nothing
-can hand it back, and a lost secret means creating a new endpoint.
+can hand it back. If it is lost or exposed, rotate it: `POST /webhook/:id/rotate-secret` returns a new
+secret once, and the old one keeps working for a grace window (`graceSeconds`, default 24h, max 7
+days, `0` for none) so the receiver can switch over without dropping deliveries.
 
 A signed delivery carries:
 
 | Header | Value |
 |---|---|
-| `X-SignalHouse-Signature` | hex HMAC-SHA256, keyed with the signing secret, over `${timestamp}.${rawBody}` |
+| `X-SignalHouse-Signature` | hex HMAC-SHA256, keyed with the signing secret, over `${timestamp}.${rawBody}`. During a rotation grace window it stays on the **previous** secret and switches when the window ends |
 | `X-SignalHouse-Timestamp` | the `timestamp` in that string: Unix time in **milliseconds** |
+| `X-SignalHouse-Signature-V1` | `t=<ms>,v1=<hex>[,v1=<hex>]`: one signature per currently valid secret, newest first. During a rotation grace window it carries both the new and the previous secret's signature; accept a match on any |
 | `X-SignalHouse-Delivery-Id` | a UUID for this event to this endpoint, the same on every retry |
 
 A correct verifier:
@@ -37,12 +40,18 @@ A correct verifier:
    header is milliseconds, not seconds.
 4. **Rejects an unsigned request to an endpoint that has a secret.** Otherwise a forger simply
    leaves the headers off.
+5. **Prefers `X-SignalHouse-Signature-V1`**, so a secret rotation never breaks verification.
+
+In Node, `verifyWebhookSignature` from `@signalhousellc/sdk/webhooks` does all of this and returns
+`{ valid, reason }` without throwing. Other languages implement the five steps directly; the
+Webhook Signing guide has a Python version.
 
 What is still **not** verifiable:
 
-- **Endpoints created before signing shipped (2026-09-03) are sent unsigned.** They report
-  `hasSigningSecret: false`, and there is no way to add a secret to an existing endpoint. To get
-  signing, create a new endpoint, store its secret, then delete the old one.
+- **Endpoints created before signing shipped (2026-09-03) are sent unsigned** until they get a
+  secret. They report `hasSigningSecret: false`. Call `POST /webhook/:id/rotate-secret` once (or use
+  *Create signing secret* in the portal's webhook edit view) to issue their first secret; deliveries
+  are signed from then on.
 - **Per-number inbound URLs are never signed** (see below).
 
 For anything unsigned, the old rules still apply: do not treat the request as authenticated, and
@@ -50,9 +59,10 @@ never take an irreversible or financial action on webhook content alone. Read th
 state back from the API first. Do not put secrets in a webhook URL as a substitute for
 verification; URLs end up in proxy logs and support screenshots.
 
-The `authType` setting (`NONE`, `BASIC`, `API_KEY`, `OAUTH2`) is a different thing: it
-authenticates *Signal House to the receiver's endpoint*. The signature is what proves origin and
-integrity. `authType` is a second layer, not a substitute.
+The `authType` setting (`NONE`, `BASIC`, `API_KEY`, `OAUTH2`, `HMAC`) chooses what *else* Signal
+House sends to the receiver. Signing does not depend on it: every endpoint with a secret is signed
+whatever `authType` says. `BASIC`/`API_KEY`/`OAUTH2` add credentials as a second layer; `HMAC` sends
+none and declares that the receiver authenticates by the signature alone.
 
 ## Retry behaviour, and when an event is gone
 
@@ -100,7 +110,7 @@ So a correct receiver:
 
 Webhooks are created per group, and numbers can additionally carry their own inbound URL.
 `authType` picks how Signal House authenticates to the endpoint, and `credentials` is
-`{ key, secret }`, required whenever `authType` is not `NONE`.
+`{ key, secret }`, required whenever `authType` is not `NONE` or `HMAC` (and rejected with those two).
 
 | authType | What is sent |
 |---|---|
@@ -108,10 +118,10 @@ Webhooks are created per group, and numbers can additionally carry their own inb
 | `BASIC` | HTTP Basic; `key` is the username, `secret` is the password |
 | `API_KEY` | `key` holds the key; `secret` optional |
 | `OAUTH2` | `secret` is the access token sent as the Authorization value; `key` is required at create but unused in outgoing headers |
+| `HMAC` | no credentials and no Authorization header; the receiver verifies the signature headers. Rejected for an endpoint with no signing secret until it has one |
 
-Verify the signature on every endpoint that has one. On top of that, `NONE` is fine for an
-endpoint that is already unreachable from the public internet; for anything else a real `authType`
-is cheap defense in depth.
+Verify the signature on every endpoint that has one. `HMAC` (or `NONE`) is fine for a receiver
+that verifies signatures; `BASIC` or `API_KEY` on top is cheap defense in depth.
 
 **The table above does not cover per-number inbound URLs.** A number can carry
 `primaryInboundWebhookUrl` and `secondaryInboundWebhookUrl`, and inbound messages are posted to
@@ -124,7 +134,9 @@ signed group endpoint instead.
 
 ## Where to look it up
 
-- **Event types, payload shape and the signing scheme:** the Webhooks reference,
+- **The signing scheme, verification and rotation:** the Webhook Signing guide,
+  https://app2.signalhouse.io/docs/webhook-signing.
+- **Event types and payload shape:** the Webhooks reference,
   https://app2.signalhouse.io/docs/webhooks. The event list changes independently of this skill;
   read it there rather than reciting it here.
 - **Whether an event actually happened:** `GET /notification`

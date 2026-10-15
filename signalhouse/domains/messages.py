@@ -551,6 +551,7 @@ class Messages:
         region: str | list[str] | None = None,
         region_scopes: str | list[dict[str, Any]] | None = None,
         date_bounds: str | None = None,
+        error_code: str | None = None,
         token: str | None = None,
         headers: dict[str, str] | None = None,
         idempotency_key: str | None = None,
@@ -575,6 +576,10 @@ class Messages:
             date_bounds: Which contract binds start_date/end_date. "day": each bound is widened to its
                 whole UTC day. "exact": a timestamp is bound as the instant
                 it names and a bare date is its whole UTC day. Omitted: "day".
+            error_code: Narrow the breakdown to a single failure reason: a numeric Infobip carrier code
+                (as a string, e.g. "607"), the Signal House campaign-opt-out code "OUT", or a no-code
+                failure class (other, moderation, att_limit, p2p_stop, campaign_opt_out, dnc_blocked,
+                bind_hold_expired). Omitted: every reason.
 
         Returns:
             Standardized response dict with rows, totalCount, totalErrors, page, and limit.
@@ -596,6 +601,7 @@ class Messages:
             "region": region,
             "regionScopes": json.dumps(region_scopes) if isinstance(region_scopes, list) else region_scopes,
             "dateBounds": date_bounds,
+            "errorCode": error_code,
         })
         return self._sdk._request(
             f"/message/analytics/by-error-code{query_string}",

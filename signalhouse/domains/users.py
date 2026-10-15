@@ -175,7 +175,8 @@ class Users:
                   allowedIps (list of IPv4/IPv6 addresses or CIDR ranges, max 100) and
                   allowedCountries (list of ISO 3166-1 alpha-2 codes such as "US", max 250).
                   The key is then only accepted from matching callers; when both are set,
-                  both must match.
+                  both must match. allowedDestinationCountries (ISO 3166-1 alpha-2, max 250)
+                  limits the countries the key can send messages to.
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
             idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
@@ -209,8 +210,9 @@ class Users:
 
         Args:
             id: The ID of the user to update.
-            data: The data to update for the user. For a customer API key, allowedIps
-                  and allowedCountries replace its restrictions ([] removes one). Changing
+            data: The data to update for the user. For a customer API key, allowedIps,
+                  allowedCountries and allowedDestinationCountries replace its restrictions
+                  ([] removes one). Changing
                   restrictions needs an interactive admin or developer session; an API key
                   cannot change its own.
             token: Optional bearer token for authentication.

@@ -77,6 +77,10 @@ class Webhooks:
         delivery to this endpoint via the `X-SignalHouse-Signature` header. It is returned exactly
         once, here — store it now, it is never exposed again by any read.
 
+        `authType` is one of `NONE` (default), `BASIC`, `API_KEY`, `OAUTH2` or `HMAC`. `HMAC` sends
+        no credentials (the receiver authenticates by the signature alone) and must be sent without
+        `credentials` or `apiHeaderPrefix`.
+
         Args:
             webhook_data: The data for the new webhook, including endpoint URL and event types.
             token: Optional bearer token for authentication.
@@ -113,6 +117,8 @@ class Webhooks:
         `update_data` may include `name`, `url`, `subscribedEvents`, and `authType`,
         `apiHeaderPrefix` and `credentials` (`{"key", "secret"?}`) to change the endpoint's own
         credentials in place; credentials are required when switching to an auth type that needs them.
+        Switching to `NONE` or `HMAC` clears the stored credentials; `HMAC` is rejected for an endpoint
+        with no signing secret (call `rotate_webhook_secret` first).
         Like every read of a webhook, the response carries `hasSigningSecret` and `hasCredentials`
         (bools), never a secret or credential.
 
