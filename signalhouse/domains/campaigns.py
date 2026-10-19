@@ -340,7 +340,9 @@ class Campaigns:
         Args:
             campaign_data: The data for the campaign to be created. Required fields include
                           brandId, usecase, description, messageFlow, privacyPolicyLink,
-                          termsAndConditionsLink, phoneNumbers.
+                          termsAndConditionsLink, phoneNumbers. Optional ``sampleMediaIds``
+                          (10DLC only): up to 5 ``mediaId`` strings from ``upload_sample_media``,
+                          attached to the TCR campaign as sample MMS media for carrier review.
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
             idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
@@ -588,6 +590,80 @@ class Campaigns:
             idempotency_key=idempotency_key,
         )
 
+    def upload_sample_media(
+        self,
+        file: BinaryIO | tuple,
+        *,
+        group_id: str | None = None,
+        token: str | None = None,
+        headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
+    ) -> dict[str, Any]:
+        """Upload a sample media file (JPEG, PNG, GIF, MP4 or MP3, up to 5MB) for a 10DLC campaign.
+
+        Reference the returned ``mediaId`` in ``sampleMediaIds`` on campaign create or update; it is
+        attached to the TCR campaign for carrier review.
+
+        Args:
+            file: The media file to upload. Can be a file-like object or a tuple of
+                  (filename, file_object, content_type).
+            group_id: The group the file belongs to. Required with a staff (signalhouse_*) key, which
+                      has no active group; otherwise optional and must be your own group.
+            token: Optional bearer token for authentication.
+            headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
+
+        Returns:
+            Standardized response dict containing the uploaded file's ``mediaId``, ``fileName``,
+            ``mimeType`` and ``size``.
+
+        Raises:
+            SignalHouseValidationError: If file is missing.
+        """
+        self._sdk._require({"file": file})
+        files_list: list[tuple[str, Any]] = [("file", file)]
+        return self._sdk._multipart_request(
+            "/campaign/sample-media",
+            method="POST",
+            form_data={"groupId": group_id} if group_id else None,
+            files=files_list,
+            token=token,
+            headers=headers,
+            idempotency_key=idempotency_key,
+        )
+
+    def read_sample_media(
+        self,
+        media_id: str,
+        *,
+        token: str | None = None,
+        headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
+    ) -> dict[str, Any]:
+        """Download a campaign sample media file your group owns.
+
+        Args:
+            media_id: The ``mediaId`` returned by ``upload_sample_media``.
+            token: Optional bearer token for authentication.
+            headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
+
+        Returns:
+            Standardized response dict containing the raw file bytes.
+
+        Raises:
+            SignalHouseValidationError: If media_id is missing.
+        """
+        self._sdk._require({"mediaId": media_id})
+        safe_media_id = quote(str(media_id), safe="")
+        return self._sdk._request(
+            f"/campaign/sample-media/{safe_media_id}",
+            method="GET",
+            token=token,
+            headers=headers,
+            idempotency_key=idempotency_key,
+        )
+
     def capture_opt_in_image_from_landing(
         self,
         brand_id: str,
@@ -645,7 +721,9 @@ class Campaigns:
                            the editable Toll-Free fields under a ``tollFree`` sub-object (useCase,
                            messageVolume, programSummary, exampleMessage, customerCareEmail,
                            optInImageURLs, optIns, multiNumberReason, useCases, channels, landingId); phoneNumbers cannot be
-                           changed — Toll-Free numbers are locked to their campaign.
+                           changed — Toll-Free numbers are locked to their campaign. For a 10DLC
+                           campaign, an optional ``sampleMediaIds`` list (up to 5 ``mediaId`` strings
+                           from ``upload_sample_media``) sets the sample MMS media for carrier review.
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
             idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
