@@ -24,6 +24,7 @@ from .domains.onboarding import Onboarding
 from .domains.shortlinks import Shortlinks
 from .domains.subgroups import Subgroups
 from .domains.subscriptions import Subscriptions
+from .domains.templates import Templates
 from .domains.tickets import Tickets
 from .domains.users import Users
 from .domains.voice import Voice
@@ -79,6 +80,7 @@ class SignalHouseSDK:
         self.shortlinks = Shortlinks(self)
         self.subgroups = Subgroups(self)
         self.subscriptions = Subscriptions(self)
+        self.templates = Templates(self)
         self.tickets = Tickets(self)
         self.users = Users(self)
         self.voice = Voice(self)
