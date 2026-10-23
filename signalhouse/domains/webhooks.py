@@ -81,6 +81,11 @@ class Webhooks:
         no credentials (the receiver authenticates by the signature alone) and must be sent without
         `credentials` or `apiHeaderPrefix`.
 
+        `eventSettings` holds per-event options keyed by event name: `NUMBER_HEALTH_BELOW_THRESHOLD`
+        and `CAMPAIGN_HEALTH_BELOW_THRESHOLD` each take `{"threshold": <number>}`, the 7-day health
+        score (1.5–10, in 0.5 steps) below which the event fires. A subscribed health event without
+        a threshold is stored with the default, 6.
+
         Args:
             webhook_data: The data for the new webhook, including endpoint URL and event types.
             token: Optional bearer token for authentication.
@@ -119,6 +124,9 @@ class Webhooks:
         credentials in place; credentials are required when switching to an auth type that needs them.
         Switching to `NONE` or `HMAC` clears the stored credentials; `HMAC` is rejected for an endpoint
         with no signing secret (call `rotate_webhook_secret` first).
+        `eventSettings` changes per-event options by event name (`NUMBER_HEALTH_BELOW_THRESHOLD`,
+        `CAMPAIGN_HEALTH_BELOW_THRESHOLD`, each `{"threshold": <number>}`, 1.5–10 in 0.5 steps);
+        events you omit keep their stored settings.
         Like every read of a webhook, the response carries `hasSigningSecret` and `hasCredentials`
         (bools), never a secret or credential.
 

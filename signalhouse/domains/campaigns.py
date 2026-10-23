@@ -380,7 +380,9 @@ class Campaigns:
         Args:
             campaign_data: The data for the toll-free campaign to be created (see API docs for
                            required fields, including the ``tollFree`` sub-object). ``phoneNumbers``
-                           must list 1-5 Toll-Free numbers, locked to the campaign once assigned.
+                           must list 1 up to the brand's ``tollFree.maxNumbersPerCampaign`` Toll-Free
+                           numbers (at most 5), on the brand's toll-free carrier, or the campaign is
+                           refused. They are locked to the campaign once assigned.
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
             idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.

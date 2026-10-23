@@ -72,6 +72,43 @@ class OnboardingAdmin:
             idempotency_key=idempotency_key,
         )
 
+    def set_toll_free_provider(
+        self,
+        group_id: str,
+        toll_free_provider: str,
+        *,
+        token: str | None = None,
+        headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
+    ) -> dict[str, Any]:
+        """Set where a group's new toll-free brands and numbers go (``infobip`` or ``twilio``). Staff-only.
+
+        Existing brands, numbers and campaigns stay where they are.
+
+        Args:
+            group_id: The ID of the group whose toll-free provider to set.
+            toll_free_provider: The toll-free provider for the group's new toll-free brands and numbers ("infobip" or "twilio").
+            token: Optional bearer token for authentication.
+            headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
+
+        Returns:
+            Standardized response dict with the updated onboarding record.
+
+        Raises:
+            SignalHouseValidationError: If group_id or toll_free_provider is missing.
+        """
+        self._sdk._require({"groupId": group_id, "tollFreeProvider": toll_free_provider})
+        safe_group_id = quote(str(group_id), safe="")
+        return self._sdk._request(
+            f"/group/onboarding/{safe_group_id}/toll-free-provider",
+            method="PUT",
+            body={"tollFreeProvider": toll_free_provider},
+            token=token,
+            headers=headers,
+            idempotency_key=idempotency_key,
+        )
+
     def add_pricing_comment(
         self,
         group_id: str,

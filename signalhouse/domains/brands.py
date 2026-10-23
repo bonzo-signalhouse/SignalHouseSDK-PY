@@ -30,6 +30,7 @@ class Brands:
         limit: int | None = None,
         status: str | None = None,
         registration_type: str | None = None,
+        current_toll_free_carrier: bool | None = None,
         token: str | None = None,
         headers: dict[str, str] | None = None,
         idempotency_key: str | None = None,
@@ -45,6 +46,8 @@ class Brands:
             status: The status of the brand to filter by (PENDING_CREATION, PENDING_APPROVAL,
                     UNVERIFIED, VERIFIED, VETTED_VERIFIED, PENDING_DELETE, DELETED).
             registration_type: Optional registration-type filter ("TEN_DLC", "TOLL_FREE", or "SHORT_CODE").
+            current_toll_free_carrier: With subgroup_id or group_id: when True, return only toll-free brands that a new
+                    toll-free campaign in that group can use (those on the group's current toll-free carrier).
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
             idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
@@ -61,6 +64,8 @@ class Brands:
             "limit": limit,
             "status": status,
             "registrationType": registration_type,
+            # urlencode would send Python's "True"; the API expects "true"/"false".
+            "currentTollFreeCarrier": None if current_toll_free_carrier is None else str(current_toll_free_carrier).lower(),
         })
         return self._sdk._request(
             f"/brand{query_string}",
@@ -171,6 +176,82 @@ class Brands:
             "/brand/toll-free",
             method="POST",
             body=brand_data,
+            token=token,
+            headers=headers,
+            idempotency_key=idempotency_key,
+        )
+
+    def get_business_verification(
+        self,
+        group_id: str,
+        *,
+        token: str | None = None,
+        headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
+    ) -> dict[str, Any]:
+        """Get a group's business verification: whether its toll-free brands need one, its status and the submitted details.
+
+        Args:
+            group_id: The ID of the group whose business verification to get.
+            token: Optional bearer token for authentication.
+            headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
+
+        Returns:
+            Standardized response dict. ``data`` holds groupId, required (whether the group's new toll-free brands
+            need a business verification), status (NOT_STARTED, SUBMITTING, IN_REVIEW, VERIFIED or NEEDS_CHANGES),
+            details, submittedAt, reviewedAt and rejectionReason (why it needs changes, or None).
+
+        Raises:
+            SignalHouseValidationError: If group_id is missing.
+        """
+        self._sdk._require({"groupId": group_id})
+        safe_group_id = quote(str(group_id), safe="")
+        return self._sdk._request(
+            f"/brand/business-verification/{safe_group_id}",
+            method="GET",
+            token=token,
+            headers=headers,
+            idempotency_key=idempotency_key,
+        )
+
+    def submit_business_verification(
+        self,
+        group_id: str,
+        details: dict[str, Any],
+        *,
+        token: str | None = None,
+        headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
+    ) -> dict[str, Any]:
+        """Submit or update a group's business verification.
+
+        Allowed when it is not started or needs changes. Review usually takes 1–2 business days; the group's
+        toll-free brands stay pending until it is verified.
+
+        Args:
+            group_id: The ID of the group whose business verification to submit.
+            details: The business verification: businessName, businessType, industry, registrationType,
+                     registrationNumber, website, street, optional street2, city, state, postalCode,
+                     country ("US" or "CA") and a ``representative`` sub-object (firstName, lastName,
+                     email, phone, jobTitle, jobLevel). See the API docs for each field's accepted values.
+            token: Optional bearer token for authentication.
+            headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
+
+        Returns:
+            Standardized response dict (status 202). ``data`` has the get_business_verification shape, with
+            status SUBMITTING.
+
+        Raises:
+            SignalHouseValidationError: If group_id or details is missing.
+        """
+        self._sdk._require({"groupId": group_id, "details": details})
+        safe_group_id = quote(str(group_id), safe="")
+        return self._sdk._request(
+            f"/brand/business-verification/{safe_group_id}",
+            method="PUT",
+            body=details,
             token=token,
             headers=headers,
             idempotency_key=idempotency_key,

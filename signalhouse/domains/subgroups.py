@@ -124,6 +124,13 @@ class Subgroups:
             update_data: The data for the subgroup to be updated. Optional carrier-ID fields include
                 carrierIdFamily and carrierIdRegion. Setting those fields requires signalhouse_api,
                 signalhouse_admin, signalhouse_user, api, admin, developer, or billing role.
+                Optional caller-name (CNAM) fields: cnamAutoApply (bool) turns auto-apply on or
+                off, so eligible numbers get their brand's registered name on outbound calls;
+                cnamBrandId (str or None) is the default caller-ID brand for numbers with no
+                campaign (must be a verified brand in this subgroup; required when turning
+                auto-apply on in a subgroup with more than one verified brand). Setting these
+                requires signalhouse_api, signalhouse_admin, signalhouse_user, api, admin, or
+                developer role.
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
             idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.

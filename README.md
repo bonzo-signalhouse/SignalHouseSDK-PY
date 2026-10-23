@@ -78,7 +78,7 @@ The SDK is organized into domain modules matching the SignalHouse API:
 |--------|-------------|
 | `sdk.auth` | Login, password reset, auth history |
 | `sdk.billing` | Wallets, payment methods, funds, invoices, fees |
-| `sdk.brands` | 10DLC brand registration and management |
+| `sdk.brands` | 10DLC brand registration and management, toll-free business verification |
 | `sdk.campaigns` | 10DLC campaign management |
 | `sdk.groups` | Group management |
 | `sdk.landings` | Landing page management (with file uploads) |

@@ -117,6 +117,7 @@ class Numbers:
         group_id: str | None = None,
         page: int | None = None,
         limit: int | None = None,
+        current_toll_free_carrier: bool | None = None,
         token: str | None = None,
         headers: dict[str, str] | None = None,
         idempotency_key: str | None = None,
@@ -132,6 +133,8 @@ class Numbers:
             group_id: Filter by group ID.
             page: The page number for pagination (default: 1).
             limit: The number of items per page (default: 20).
+            current_toll_free_carrier: With subgroup_id or group_id: when True, return only toll-free numbers that a new
+                toll-free campaign in that group can use (those on the group's current toll-free carrier).
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
             idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
@@ -165,6 +168,8 @@ class Numbers:
             "groupId": group_id,
             "page": page,
             "limit": limit,
+            # urlencode would send Python's "True"; the API expects "true"/"false".
+            "currentTollFreeCarrier": None if current_toll_free_carrier is None else str(current_toll_free_carrier).lower(),
         })
         return self._sdk._request(
             f"/number{query_string}",
@@ -472,6 +477,125 @@ class Numbers:
             idempotency_key=idempotency_key,
         )
 
+    def get_caller_name(
+        self,
+        phone_number: str,
+        *,
+        token: str | None = None,
+        headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
+    ) -> dict[str, Any]:
+        """Get a phone number's outbound caller name (CNAM) - the name US carriers show for calls from it.
+
+        Roles: api, admin, developer, billing, user.
+
+        Args:
+            phone_number: The phone number (E.164, leading + optional).
+            token: Optional bearer token for authentication.
+            headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
+
+        Returns:
+            Standardized response dict resolving to
+            ``{phoneNumber, cnam, autoApply, eligible, ineligibleReason}``.
+
+        Raises:
+            SignalHouseValidationError: If phone_number is missing.
+        """
+        self._sdk._require({"phoneNumber": phone_number})
+        safe_phone_number = quote(str(phone_number), safe="")
+        return self._sdk._request(
+            f"/number/{safe_phone_number}/cnam",
+            method="GET",
+            token=token,
+            headers=headers,
+            idempotency_key=idempotency_key,
+        )
+
+    def set_caller_name(
+        self,
+        phone_number: str,
+        name: str,
+        *,
+        brand_id: str | None = None,
+        token: str | None = None,
+        headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
+    ) -> dict[str, Any]:
+        """Set a phone number's outbound caller name (CNAM).
+
+        The name may only remove characters from the registered name of the number's brand (its
+        campaign's brand, else ``brand_id``, else the subgroup's default caller-ID brand), and must
+        be 1-15 letters, digits, spaces, ``-`` or ``_``.
+
+        Roles: api, admin, developer.
+
+        Args:
+            phone_number: The phone number (E.164, leading + optional).
+            name: The caller name to show.
+            brand_id: The verified brand the name comes from; only for numbers with no campaign.
+            token: Optional bearer token for authentication.
+            headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
+
+        Returns:
+            Standardized response dict resolving to
+            ``{phoneNumber, cnam, autoApply, eligible, ineligibleReason}``.
+
+        Raises:
+            SignalHouseValidationError: If phone_number or name is missing.
+        """
+        self._sdk._require({"phoneNumber": phone_number, "name": name})
+        safe_phone_number = quote(str(phone_number), safe="")
+        body: dict[str, Any] = {"name": name}
+        if brand_id:
+            body["brandId"] = brand_id
+        return self._sdk._request(
+            f"/number/{safe_phone_number}/cnam",
+            method="PUT",
+            body=body,
+            token=token,
+            headers=headers,
+            idempotency_key=idempotency_key,
+        )
+
+    def delete_caller_name(
+        self,
+        phone_number: str,
+        *,
+        token: str | None = None,
+        headers: dict[str, str] | None = None,
+        idempotency_key: str | None = None,
+    ) -> dict[str, Any]:
+        """Remove a phone number's own caller name (CNAM).
+
+        If its subgroup has caller name auto-apply on, the number goes back to the automatic name.
+
+        Roles: api, admin, developer.
+
+        Args:
+            phone_number: The phone number (E.164, leading + optional).
+            token: Optional bearer token for authentication.
+            headers: Additional headers to include in the request.
+            idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
+
+        Returns:
+            Standardized response dict resolving to
+            ``{phoneNumber, cnam, autoApply, eligible, ineligibleReason}``.
+
+        Raises:
+            SignalHouseValidationError: If phone_number is missing.
+        """
+        self._sdk._require({"phoneNumber": phone_number})
+        safe_phone_number = quote(str(phone_number), safe="")
+        return self._sdk._request(
+            f"/number/{safe_phone_number}/cnam",
+            method="DELETE",
+            token=token,
+            headers=headers,
+            idempotency_key=idempotency_key,
+        )
+
     def port_in_phone_number(
         self,
         number_data: dict[str, Any],
@@ -623,7 +747,9 @@ class Numbers:
         """Assign phone numbers to a campaign. Numbers that are not found, already RELEASED, already
         assigned to a different campaign, on a mismatched DCA, or (for a 10DLC campaign without a number
         pool) beyond the remaining 49-number-per-campaign limit are not queued - each is reported back
-        individually in skipped instead of failing the whole request.
+        individually in skipped instead of failing the whole request. A Toll-Free campaign whose brand
+        reports tollFree.maxNumbersPerCampaign as 1 holds one number: a request that would give it a
+        second is refused with a 400 and nothing is queued.
 
         Args:
             campaign_id: The ID of the campaign to assign phone numbers to.
