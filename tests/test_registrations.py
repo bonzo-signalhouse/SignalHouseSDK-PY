@@ -268,5 +268,144 @@ class ShortlinkOptOutContracts(unittest.TestCase):
             self.domain.confirm_opt_out("")
 
 
+class TollFreeCarrierFilterContracts(unittest.TestCase):
+    def setUp(self):
+        self.client = CaptureClient()
+
+    def test_list_methods_send_current_toll_free_carrier_lowercase(self):
+        """The brand and number lists send "true"/"false", not Python's "True"/"False"."""
+        lists = (
+            (load_domain("brands").Brands(self.client), "get_brands", "/brand"),
+            (load_domain("numbers").Numbers(self.client), "get_phone_numbers", "/number"),
+        )
+        for domain, method, expected_path in lists:
+            for value, expected in ((True, "true"), (False, "false")):
+                with self.subTest(method=method, value=value):
+                    getattr(domain, method)(subgroup_id="S0000001", current_toll_free_carrier=value)
+                    path, request = self.client.calls[-1]
+                    self.assertEqual(urlsplit(path).path, expected_path)
+                    self.assertEqual(request["method"], "GET")
+                    self.assertEqual(parse_qs(urlsplit(path).query), {"subgroupId": ["S0000001"], "currentTollFreeCarrier": [expected]})
+
+    def test_list_methods_omit_current_toll_free_carrier_by_default(self):
+        """Callers that do not pass the flag get the unchanged request."""
+        load_domain("brands").Brands(self.client).get_brands(group_id="G0000001")
+        self.assertEqual(parse_qs(urlsplit(self.client.calls[-1][0]).query), {"groupId": ["G0000001"]})
+        load_domain("numbers").Numbers(self.client).get_phone_numbers(group_id="G0000001")
+        self.assertEqual(parse_qs(urlsplit(self.client.calls[-1][0]).query), {"groupId": ["G0000001"]})
+
+
+class BusinessVerificationContracts(unittest.TestCase):
+    def setUp(self):
+        self.client = CaptureClient()
+        self.domain = load_domain("brands").Brands(self.client)
+
+    def test_get_business_verification_encodes_the_group(self):
+        """The read is a GET on the group's encoded path with no body."""
+        self.domain.get_business_verification("G0000001/x", token="session")
+        path, request = self.client.calls[-1]
+        self.assertEqual(path, "/brand/business-verification/G0000001%2Fx")
+        self.assertEqual(request["method"], "GET")
+        self.assertNotIn("body", request)
+        self.assertEqual(request["token"], "session")
+
+    def test_submit_business_verification_puts_the_details(self):
+        """The submit sends the details unchanged as the PUT body and forwards the idempotency key."""
+        details = {
+            "businessName": "Acme Inc", "businessType": "CORPORATION", "industry": "RETAIL",
+            "registrationType": "EIN", "registrationNumber": "12-3456789", "website": "https://acme.example",
+            "street": "1 Main St", "city": "Austin", "state": "TX", "postalCode": "78701", "country": "US",
+            "representative": {
+                "firstName": "Ada", "lastName": "Lee", "email": "ada@acme.example", "phone": "+15125550100",
+                "jobTitle": "Owner", "jobLevel": "CEO",
+            },
+        }
+        self.domain.submit_business_verification("G0000001", details, idempotency_key="key-1")
+        path, request = self.client.calls[-1]
+        self.assertEqual(path, "/brand/business-verification/G0000001")
+        self.assertEqual(request["method"], "PUT")
+        self.assertEqual(request["body"], details)
+        self.assertEqual(request["idempotency_key"], "key-1")
+
+    def test_business_verification_requires_the_group_and_details(self):
+        with self.assertRaises(ValueError):
+            self.domain.get_business_verification("")
+        with self.assertRaises(ValueError):
+            self.domain.submit_business_verification("", {"businessName": "Acme Inc"})
+        with self.assertRaises(ValueError):
+            self.domain.submit_business_verification("G0000001", None)
+        self.assertEqual(self.client.calls, [])
+
+
+class SubgroupBusinessVerificationContracts(unittest.TestCase):
+    def setUp(self):
+        self.client = CaptureClient()
+        self.domain = load_domain("brands").Brands(self.client)
+
+    def test_get_business_verification_sends_the_subgroup_as_a_query(self):
+        """A given subgroup goes, encoded, into the subgroupId query parameter of the read."""
+        self.domain.get_business_verification("G0000001", subgroup_id="S0000001/x", token="session")
+        path, request = self.client.calls[-1]
+        self.assertEqual(urlsplit(path).path, "/brand/business-verification/G0000001")
+        self.assertEqual(urlsplit(path).query, "subgroupId=S0000001%2Fx")
+        self.assertEqual(request["method"], "GET")
+        self.assertNotIn("body", request)
+        self.assertEqual(request["token"], "session")
+
+    def test_submit_business_verification_sends_the_subgroup_as_a_query(self):
+        """A given subgroup goes into the query, never the body, and the idempotency key is forwarded."""
+        details = {"businessName": "Acme Inc", "country": "US"}
+        self.domain.submit_business_verification("G0000001", details, subgroup_id="S0000001", idempotency_key="key-1")
+        path, request = self.client.calls[-1]
+        self.assertEqual(path, "/brand/business-verification/G0000001?subgroupId=S0000001")
+        self.assertEqual(request["method"], "PUT")
+        self.assertEqual(request["body"], {"businessName": "Acme Inc", "country": "US"})
+        self.assertEqual(request["idempotency_key"], "key-1")
+
+    def test_business_verification_urls_are_unchanged_without_a_subgroup(self):
+        """Without a subgroup neither method adds a query string."""
+        self.domain.get_business_verification("G0000001")
+        self.domain.submit_business_verification("G0000001", {"businessName": "Acme Inc"})
+        self.assertEqual([path for path, _ in self.client.calls], ["/brand/business-verification/G0000001"] * 2)
+
+
+class TollFreeIsvAccountContracts(unittest.TestCase):
+    ACCOUNT_SID = "AC" + "0" * 32
+    API_KEY_SID = "SK" + "1" * 32
+
+    def setUp(self):
+        self.client = CaptureClient()
+        self.domain = load_domain("brands").Brands(self.client)
+
+    def test_get_toll_free_isv_account_encodes_the_group(self):
+        """The staff read is a GET on the group's encoded path with no body."""
+        self.domain.get_toll_free_isv_account("G0000001/x", token="session")
+        path, request = self.client.calls[-1]
+        self.assertEqual(path, "/brand/toll-free-isv-account/G0000001%2Fx")
+        self.assertEqual(request["method"], "GET")
+        self.assertNotIn("body", request)
+        self.assertEqual(request["token"], "session")
+
+    def test_set_toll_free_isv_account_puts_the_account_and_key(self):
+        """The staff write sends the account and its API key as the PUT body and forwards the idempotency key."""
+        self.domain.set_toll_free_isv_account("G0000001", self.ACCOUNT_SID, self.API_KEY_SID, "key-secret", idempotency_key="key-1")
+        path, request = self.client.calls[-1]
+        self.assertEqual(path, "/brand/toll-free-isv-account/G0000001")
+        self.assertEqual(request["method"], "PUT")
+        self.assertEqual(request["body"], {"accountSid": self.ACCOUNT_SID, "apiKeySid": self.API_KEY_SID, "apiKeySecret": "key-secret"})
+        self.assertEqual(request["idempotency_key"], "key-1")
+
+    def test_toll_free_isv_account_requires_the_group_account_and_key(self):
+        """Each method refuses a missing argument before sending anything."""
+        with self.assertRaises(ValueError):
+            self.domain.get_toll_free_isv_account("")
+        for missing in range(4):
+            args = ["G0000001", self.ACCOUNT_SID, self.API_KEY_SID, "key-secret"]
+            args[missing] = ""
+            with self.subTest(missing=missing), self.assertRaises(ValueError):
+                self.domain.set_toll_free_isv_account(*args)
+        self.assertEqual(self.client.calls, [])
+
+
 if __name__ == "__main__":
     unittest.main()

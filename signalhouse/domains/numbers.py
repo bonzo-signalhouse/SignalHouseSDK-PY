@@ -21,17 +21,21 @@ class NumbersAdmin:
         porting_id: str,
         status: str,
         description: str | None = None,
+        on_hold_reason: str | None = None,
         *,
         token: str | None = None,
         headers: dict[str, str] | None = None,
         idempotency_key: str | None = None,
     ) -> dict[str, Any]:
-        """Change the status of a port-in request.
+        """Change the status of a port-in request. Infobip exposes no porting-status API or
+        webhook, so ON_HOLD and its reason are always staff-entered here.
 
         Args:
             porting_id: The ID of the port-in request.
-            status: The new status to set.
+            status: The new status to set (PENDING, IN_PROGRESS, ON_HOLD, REJECTED).
             description: Optional description for the status change.
+            on_hold_reason: Required when status is ON_HOLD (DOCUMENTATION_MISMATCH,
+                ACCOUNT_INFO_INCORRECT, CARRIER_REJECTED, PENDING_CUSTOMER_ACTION, OTHER).
             token: Optional bearer token for authentication.
             headers: Additional headers to include in the request.
             idempotency_key: Sent as the Idempotency-Key header; a retry with the same key and request replays the first response.
@@ -47,6 +51,8 @@ class NumbersAdmin:
         body: dict[str, Any] = {"status": status}
         if description is not None:
             body["description"] = description
+        if on_hold_reason is not None:
+            body["onHoldReason"] = on_hold_reason
         return self._sdk._request(
             f"/number/portin/{safe_porting_id}/status",
             method="PUT",
@@ -648,7 +654,7 @@ class Numbers:
         Args:
             group_id: Filter by group ID.
             phone_number: Filter by phone number.
-            status: Filter by status (PENDING, IN_PROGRESS, COMPLETED, REJECTED, CANCELLED).
+            status: Filter by status (PENDING, IN_PROGRESS, ON_HOLD, REJECTED, SUCCESS).
             page: The page number for pagination (default: 1).
             limit: The number of items per page (default: 20).
             exclude_documents: When True, leave signatureUrl and billingUrl out of each request (the inline LOA signature and billing statement). Fetch one request by ID to read them.

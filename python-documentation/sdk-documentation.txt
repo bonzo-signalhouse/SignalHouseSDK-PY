@@ -139,11 +139,50 @@ BILLING  (signal_house.billing)
 BRANDS  (signal_house.brands)
 --------------------------------------------------------------------------------
   get_brands(*, id=None, subgroup_id=None, group_id=None, page=None,
-      limit=None, status=None, token=None, headers=None)
+      limit=None, status=None, current_toll_free_carrier=None, token=None,
+      headers=None)
     List brands with filters.
+    current_toll_free_carrier: with subgroup_id or group_id, True returns only
+    toll-free brands that a new toll-free campaign in that group can use
+    (those on the group's current toll-free carrier).
 
   create_brand(brand_data, *, token=None, headers=None)
     Create a new 10DLC brand.
+
+  get_business_verification(group_id, *, subgroup_id=None, token=None,
+      headers=None)
+    Get a group's business verification: whether its toll-free brands need
+    one, its status and the submitted details.
+    Returns { groupId, subgroupId, required, status, details, submittedAt,
+    reviewedAt, rejectionReason }; subgroupId is present only when the
+    business verification belongs to one subgroup; status is NOT_STARTED,
+    SUBMITTING, IN_REVIEW, VERIFIED or NEEDS_CHANGES; rejectionReason says
+    why it needs changes, or is null.
+    subgroup_id: sent as the subgroupId query parameter only when given. Some
+    groups verify each subgroup's business separately: a platform whose
+    subgroups are separate businesses, set up by Signal House. For those
+    groups subgroup_id is required (400 without it). For any other group, the
+    group's one business verification is returned. The subgroup must be one
+    of the group's subgroups (404 otherwise).
+
+  submit_business_verification(group_id, details, *, subgroup_id=None,
+      token=None, headers=None)
+    Submit or update a group's business verification. Allowed when it is not
+    started or needs changes. Review usually takes 1–2 business days; the
+    group's toll-free brands stay pending until it is verified.
+    details: businessName, businessType, industry, registrationType,
+    registrationNumber, website, street, street2 (optional), city, state,
+    postalCode, country ("US" or "CA") and representative (firstName,
+    lastName, email, phone, jobTitle, jobLevel).
+    subgroup_id: sent as the subgroupId query parameter only when given; the
+    body is unchanged. Some groups verify each subgroup's business
+    separately: a platform whose subgroups are separate businesses, set up by
+    Signal House. For those groups subgroup_id is required (400 without it),
+    and only that subgroup's toll-free brands wait for its business
+    verification. For any other group, the group's one business verification
+    is submitted. The subgroup must be one of the group's subgroups (404
+    otherwise) and active (400 otherwise).
+    Returns 202 with the get_business_verification shape (status SUBMITTING).
 
   update_brand(brand_id, brand_data, *, token=None, headers=None)
     Update brand information.
@@ -297,9 +336,13 @@ NUMBERS  (signal_house.numbers)
 --------------------------------------------------------------------------------
   get_phone_numbers(*, phone_number=None, campaign_id=None,
       registration_id=None, brand_id=None, subgroup_id=None, group_id=None,
-      page=None, limit=None, token=None, headers=None)
+      page=None, limit=None, current_toll_free_carrier=None, token=None,
+      headers=None)
     List your phone numbers with filters.
     registration_id: filter to numbers provisioned under this registration.
+    current_toll_free_carrier: with subgroup_id or group_id, True returns only
+    toll-free numbers that a new toll-free campaign in that group can use
+    (those on the group's current toll-free carrier).
 
   get_number_health(*, phone_number, token=None, headers=None)
     Get the portal-parity health score (1–10) for an owned phone number.
@@ -317,6 +360,19 @@ NUMBERS  (signal_house.numbers)
   update_phone_number(phone_number, update_data, *, token=None,
       headers=None)
     Update phone number details (e.g., friendly name).
+
+  get_caller_name(phone_number, *, token=None, headers=None)
+    Get the number's outbound caller name (GET /number/:phoneNumber/cnam).
+    Returns { phoneNumber, cnam, autoApply, eligible, ineligibleReason }.
+
+  set_caller_name(phone_number, name, *, brand_id=None, token=None,
+      headers=None)
+    Set the number's outbound caller name (PUT /number/:phoneNumber/cnam).
+    brand_id only for numbers with no campaign; sent only when provided.
+
+  delete_caller_name(phone_number, *, token=None, headers=None)
+    Remove the number's own caller name (DELETE /number/:phoneNumber/cnam);
+    falls back to the auto-applied name if the subgroup has auto-apply on.
 
   assign_phone_number_to_campaign(campaign_id, phone_numbers, *,
       token=None, headers=None)
@@ -391,6 +447,9 @@ SUBGROUPS  (signal_house.subgroups)
     update_data may include optional carrierIdFamily and carrierIdRegion.
     Setting carrierIdFamily or carrierIdRegion requires signalhouse_api,
     signalhouse_admin, signalhouse_user, api, admin, developer, or billing role.
+    update_data may also include cnamAutoApply (bool) and cnamBrandId (str or
+    None) for caller name auto-apply. Setting them requires signalhouse_api,
+    signalhouse_admin, signalhouse_user, api, admin, or developer role.
 
   delete_subgroup(id, *, token=None, headers=None)
     Delete (deactivate) a subgroup.
@@ -770,3 +829,64 @@ LANGUAGE EXAMPLE
   signal_house.messages.get_messages(region=["US", "GB"],
       region_scopes=[{"region": "GB", "channels": ["virtualLongCode"]}])
   signal_house.messages.get_analytics_filter_options(group_id="G1", region="GB")
+
+
+TEMPLATES
+--------------------------------------------------------------------------------
+Versioned, raw message templates. One namespace, templates, on
+/template. list takes an optional channel filter;
+create reads the channel from the body. RCS templates answer 404 while
+the environment's RCS switch is off. Every call carries groupId: GET in the query string,
+JSON writes in the body, the media upload as a form field.
+
+A template has a head {templateId, groupId, channel, name, tag,
+archivedAt, draftVersion, publishedVersion, revision,
+createdBy, createdAt, updatedAt} and numbered versions
+{version, state (DRAFT|PUBLISHED), body, contentHash, publishedAt, ...}. Reads
+of one template return {head, version}; lists return {data, total, page, limit}
+with summaries that add state and hasUnpublishedChanges.
+
+create creates draft version 1 from name (1-120 chars, unique per
+group and channel), body and optional tag (201). get takes version: a
+number, "draft" or "published"; omitted reads the published version, else the
+draft, and an explicit selector never falls back (404). update saves the
+draft from any of name, tag and body; writes apply directly (last write wins)
+with no revision guard. Leave tag out to keep it; pass tag=None to clear it.
+publish always publishes the current draft and answers 400
+{code:"TEMPLATE_INVALID", errors, warnings} for an incomplete draft and 409
+{code:"NO_DRAFT"} when there is none. archive takes only groupId. The
+409 codes a write can answer are TEMPLATE_ARCHIVED (the template is archived),
+TEMPLATE_NAME_TAKEN (another template in the group and channel has the
+name), NO_DRAFT (publish with no draft) and DRAFT_CHANGED (publish only: the
+draft changed while it was being published; publish again). validate checks
+exactly one of body or version and never writes. capabilities returns the
+server's block kinds, action types, limits and media rules, and with provider
+(infobip|sinch) that provider's limits and unsupported features.
+upload_media sends multipart fields file and groupId and returns
+{mediaId, url, bytes, mimeType, kind, width, height, ...} (201).
+
+The body is the raw RcsTemplateBody {channel:"rcs", contentFormat:"rcs.blocks.v1",
+content:{blocks}, variables, defaults, fallback}; the SDK sends it unchanged and
+offers no conversion, duplication or starter helpers. Unknown keys are rejected.
+Placeholders are {{key}}; {{sender_name}} is reserved. Writes accept an
+idempotency key. Reads (including validate and capabilities) need
+admin, developer, api, billing or user; writes need admin, developer or api.
+
+LANGUAGE EXAMPLE
+  body = {
+      "channel": "rcs", "contentFormat": "rcs.blocks.v1",
+      "content": {"blocks": [{"id": "b1", "kind": "text", "text": "Hi {{first_name}}"}]},
+      "variables": [{"key": "first_name", "type": "text", "required": True}],
+  }
+  created = signal_house.templates.create(group_id="G1", name="Welcome", body=body,
+                                          idempotency_key=str(uuid.uuid4()))
+  head = created["data"]["head"]
+  saved = signal_house.templates.update(head["templateId"], group_id="G1",
+      tag=None)   # None clears the tag; leave it out to keep it
+  head = saved["data"]["head"]
+  signal_house.templates.validate(head["templateId"], group_id="G1", version="draft")
+  signal_house.templates.publish(head["templateId"], group_id="G1")
+  signal_house.templates.list(group_id="G1", channel="rcs", state="PUBLISHED")
+  signal_house.templates.capabilities(group_id="G1", provider="infobip")
+  with open("hero.png", "rb") as image:
+      signal_house.templates.upload_media(group_id="G1", file=image, file_name="hero.png")

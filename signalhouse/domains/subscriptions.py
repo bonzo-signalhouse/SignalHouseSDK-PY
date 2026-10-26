@@ -177,6 +177,39 @@ class SubscriptionsAdmin:
             idempotency_key=idempotency_key,
         )
 
+    def update_custom_subscription(
+        self,
+        group_id: str,
+        update_data: dict[str, Any],
+        *,
+        token: str | None = None,
+        headers: dict[str, str] | None = None,
+    ) -> dict[str, Any]:
+        """Update volume tiers, ramp, and monthly minimum on an active custom subscription.
+
+        Args:
+            group_id: The ID of the group whose custom subscription to update.
+            update_data: Fields to change (name, description, monthlyFee, volumeTiers,
+                monthlyMinimumSmsSegments, rampDays).
+            token: Optional bearer token for authentication.
+            headers: Additional headers to include in the request.
+
+        Returns:
+            Standardized response dict.
+
+        Raises:
+            SignalHouseValidationError: If group_id or update_data is missing.
+        """
+        self._sdk._require({"groupId": group_id, "updateData": update_data})
+        safe_group_id = quote(str(group_id), safe="")
+        return self._sdk._request(
+            f"/subscription/user/custom/{safe_group_id}",
+            method="PUT",
+            body=update_data,
+            token=token,
+            headers=headers,
+        )
+
 
 class Subscriptions:
     """Subscription management operations."""

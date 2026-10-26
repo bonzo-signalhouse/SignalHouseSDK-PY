@@ -392,6 +392,9 @@ class Billing:
     ) -> dict[str, Any]:
         """Get the fee schedule for a specific group.
 
+        When the group is on a custom volume-tiered plan, the response also includes volumePricing: tiers,
+        the current period's dates, count and minimum, ramp, and current rate (rates in microdollars per segment).
+
         Args:
             group_id: The ID of the group to get fees for.
             token: Optional bearer token for authentication.
